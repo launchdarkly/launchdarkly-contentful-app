@@ -1,7 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Paragraph, Button, Spinner, Card, Stack, Text, Note } from '@contentful/f36-components';
-import { PageAppSDK } from '@contentful/app-sdk';
-import { useCMA, useSDK } from '@contentful/react-apps-toolkit';
+import { useCMA } from '@contentful/react-apps-toolkit';
 import { useErrorState } from '../../hooks/useErrorState';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import ExperimentChatbot from '../ExperimentChatbot/ExperimentChatbot';
@@ -22,8 +23,7 @@ async function getAISuggestions(entries: any[]) {
   return data.suggestions;
 }
 
-const Page = () => {
-  const sdk = useSDK<PageAppSDK>();
+const PageComponent = () => {
   const cma = useCMA();
   const { handleError } = useErrorState('Page');
 
@@ -76,4 +76,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default PageComponent;
