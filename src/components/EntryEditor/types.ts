@@ -1,12 +1,74 @@
 // src/components/EntryEditor/types.ts
 
-export type FlagFormState = {
+import { EditorAppSDK } from '@contentful/app-sdk';
+import { FlagMode, RolloutStrategy, VariationType } from '../../types/launchdarkly';
+
+// Enhanced FlagFormState with all the flag management capabilities
+export interface FlagFormState {
+  name: string;
+  key: string;
+  description: string;
+  projectKey: string;
+  variationType: VariationType;
+  variations: Array<{ value: any; name: string }>;
+  defaultVariation: number;
+  tags: string[];
+  temporary: boolean;
+  existingFlagKey?: string;
+  mode: FlagMode;
+  rolloutStrategy?: RolloutStrategy;
+  rolloutConfig?: {
+    percentage?: number;
+    userSegments?: string[];
+    startDate?: string;
+    endDate?: string;
+  };
+  scheduledRelease?: {
+    enabled: boolean;
+    releaseDate: string;
+    environments: string[];
+  };
+  previewSettings?: {
+    enablePreviewFlags: boolean;
+    previewEnvironment: string;
+    autoCreatePreviewFlags: boolean;
+  };
+  dependencies?: string[];
+  // Keep the existing content mapping field
+  flagDetails: Record<string, any>;
+}
+
+// Legacy simple FlagFormState for backward compatibility
+export type SimpleFlagFormState = {
   name: string;
   key: string;
   description: string;
   variations: { name: string; value: any }[];
   flagDetails: Record<string, any>;
 };
+
+export interface EntryEditorProps {
+  defaultProject?: string;
+  defaultEnvironment?: string;
+}
+
+// Extended SDK for flag management capabilities
+export interface ExtendedEditorAppSDK extends EditorAppSDK {
+  entry: EditorAppSDK['entry'] & {
+    fields: EditorAppSDK['entry']['fields'] & {
+      mode: { getValue: () => FlagMode };
+      rolloutStrategy: { getValue: () => RolloutStrategy };
+      rolloutConfig: { getValue: () => any };
+      scheduledRelease: { getValue: () => any };
+      previewSettings: { getValue: () => any };
+      dependencies: { getValue: () => string[] };
+    };
+  };
+  window: {
+    startAutoResizer: () => void;
+    stopAutoResizer: () => void;
+  };
+}
 
 export interface ContentfulEntry {
   sys: {

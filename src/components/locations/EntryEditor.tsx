@@ -18,13 +18,36 @@ const EntryEditor = () => {
   const { error, handleError, clearError } = useErrorState('EntryEditor');
   const [enhancedVariationContent, setEnhancedVariationContent] = useState<Record<number, EnhancedContentfulEntry>>({});
   
-  // Basic form state
+  // Basic form state with proper defaults for enhanced FlagFormState
   const [formState, setFormState] = useState<FlagFormState>({
     variations: [],
     flagDetails: {},
     name: '',
     key: '',
-    description: ''
+    description: '',
+    projectKey: '',
+    variationType: 'boolean',
+    defaultVariation: 0,
+    tags: [],
+    temporary: false,
+    mode: null,
+    rolloutConfig: {
+      percentage: 0,
+      userSegments: [],
+      startDate: '',
+      endDate: ''
+    },
+    scheduledRelease: {
+      enabled: false,
+      releaseDate: '',
+      environments: []
+    },
+    previewSettings: {
+      enablePreviewFlags: false,
+      previewEnvironment: 'production',
+      autoCreatePreviewFlags: false
+    },
+    dependencies: []
   });
   // Loading state
   const [loading, setLoading] = useState({ entry: true, saving: false });
@@ -38,12 +61,36 @@ const EntryEditor = () => {
         setLoading(prev => ({ ...prev, entry: true }));
         const fields = sdk.entry.fields;
   
-        const savedState = {
+        const savedState: FlagFormState = {
           variations: fields.variations?.getValue() || [],
           flagDetails: fields.flagDetails?.getValue() || {},
           name: fields.name?.getValue() || '',
           key: fields.key?.getValue() || '',
-          description: fields.description?.getValue() || ''
+          description: fields.description?.getValue() || '',
+          projectKey: fields.projectKey?.getValue() || '',
+          variationType: fields.variationType?.getValue() || 'boolean',
+          defaultVariation: fields.defaultVariation?.getValue() || 0,
+          tags: fields.tags?.getValue() || [],
+          temporary: fields.temporary?.getValue() || false,
+          mode: fields.mode?.getValue() || null,
+          rolloutStrategy: fields.rolloutStrategy?.getValue(),
+          rolloutConfig: fields.rolloutConfig?.getValue() || {
+            percentage: 0,
+            userSegments: [],
+            startDate: '',
+            endDate: ''
+          },
+          scheduledRelease: fields.scheduledRelease?.getValue() || {
+            enabled: false,
+            releaseDate: '',
+            environments: []
+          },
+          previewSettings: fields.previewSettings?.getValue() || {
+            enablePreviewFlags: false,
+            previewEnvironment: 'production',
+            autoCreatePreviewFlags: false
+          },
+          dependencies: fields.dependencies?.getValue() || []
         };
   
         const flagDetails = savedState.flagDetails || {};

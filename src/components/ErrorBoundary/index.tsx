@@ -1,6 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Note } from '@contentful/f36-components';
-import { useSDK } from '@contentful/react-apps-toolkit';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -27,10 +26,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error(`Error in ${this.props.componentName}:`, error, errorInfo);
     
-    if (this.props.showNotification) {
-      const sdk = useSDK();
-      sdk.notifier.error(`An error occurred in the ${this.props.componentName}: ${error.message}`);
-    }
+    // Note: Cannot use useSDK hook in class component
+    // Notification should be handled by parent component
     
     if (this.props.onError) {
       this.props.onError(error);
