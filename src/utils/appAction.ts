@@ -17,7 +17,15 @@ export const callAppAction = async <T = any>(
   params: any
 ): Promise<T> => {
   
-  const apiKey = sdk.parameters?.installation?.launchDarklyApiKey;
+  // Get API key using compatible method based on SDK type
+  let apiKey;
+  if ('app' in sdk && typeof sdk.app.getParameters === 'function') {
+    const parameters = await sdk.app.getParameters();
+    apiKey = parameters?.launchDarklyApiKey;
+  } else {
+    apiKey = sdk.parameters?.installation?.launchDarklyApiKey;
+  }
+  
   if (!apiKey) {
     throw new Error('Missing LaunchDarkly API key');
   }

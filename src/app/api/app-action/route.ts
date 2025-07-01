@@ -85,21 +85,37 @@ export async function POST(req: NextRequest) {
         break;
       }
       case 'getProjects': {
-        const url = `${apiUrl}/projects?limit=100`;
-        res = await fetch(url, {
-          headers: {
-            'Authorization': apiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-        
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`Failed to fetch projects: ${res.status} ${res.statusText} - ${errorText}`);
+        let allItems: any[] = [];
+        let offset = 0;
+        const limit = 100;
+        let totalCount = 0;
+        try {
+          do {
+            const url = `${apiUrl}/projects?limit=${limit}&offset=${offset}`;
+            res = await fetch(url, {
+              headers: {
+                'Authorization': apiKey,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+            });
+            
+            if (!res.ok) {
+              const errorText = await res.text();
+              throw new Error(`Failed to fetch projects: ${res.status} ${res.statusText} - ${errorText}`);
+            }
+            
+            const page = await res.json();
+            if (page.items) {
+              allItems = allItems.concat(page.items);
+            }
+            totalCount = page.totalCount || 0;
+            offset += limit;
+          } while (allItems.length < totalCount);
+          body = { items: allItems, totalCount };
+        } catch (error) {
+          throw error;
         }
-        
-        body = await res.json();
         break;
       }
       case 'updateFlagVariations': {
@@ -135,6 +151,34 @@ export async function POST(req: NextRequest) {
         });
         body = await res.json();
         console.log('[API] getFlagDetails response:', body);
+        break;
+      }
+      case 'createFlag': {
+        const { projectKey, flagData } = params;
+        if (!projectKey || !flagData) {
+          return NextResponse.json({ status: 400, body: { error: 'Missing projectKey or flagData' } }, { status: 400 });
+        }
+        
+        // Validate required fields
+        if (!flagData.name || !flagData.key || !flagData.kind || !flagData.variations) {
+          return NextResponse.json({ 
+            status: 400, 
+            body: { error: 'Missing required flag fields: name, key, kind, variations' } 
+          }, { status: 400 });
+        }
+
+        const url = `${apiUrl}/flags/${projectKey}`;
+        res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': apiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(flagData),
+        });
+        body = await res.json();
+        console.log('[API] createFlag response:', body);
         break;
       }
       // Add more actions as needed

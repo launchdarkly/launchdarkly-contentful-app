@@ -131,22 +131,26 @@ const ConfigScreen = () => {
           }}
           onValidate={handleValidateApiKey}
         />
-        <ProjectSelector
-          projectKey={parameters.launchDarklyProjectKey || ''}
-          projects={projects}
-          isLoading={projectsLoading}
-          onChange={(projectKey) => {
-            setParameters((prev) => ({ ...prev, launchDarklyProjectKey: projectKey, launchDarklyEnvironment: '' }));
-          }}
-        />
-        <EnvironmentSelector
-          environmentKey={parameters.launchDarklyEnvironment || ''}
-          environments={environments}
-          isLoading={environmentsLoading}
-          onChange={(environmentKey) => {
-            setParameters((prev) => ({ ...prev, launchDarklyEnvironment: environmentKey }));
-          }}
-        />
+        {apiKeyValidation.isValid && (
+          <ProjectSelector
+            projectKey={parameters.launchDarklyProjectKey || ''}
+            projects={projects}
+            isLoading={projectsLoading}
+            onChange={(projectKey) => {
+              setParameters((prev) => ({ ...prev, launchDarklyProjectKey: projectKey, launchDarklyEnvironment: '' }));
+            }}
+          />
+        )}
+        {apiKeyValidation.isValid && parameters.launchDarklyProjectKey && (
+          <EnvironmentSelector
+            environmentKey={parameters.launchDarklyEnvironment || ''}
+            environments={environments}
+            isLoading={environmentsLoading}
+            onChange={(environmentKey) => {
+              setParameters((prev) => ({ ...prev, launchDarklyEnvironment: environmentKey }));
+            }}
+          />
+        )}
       </Form>
     </Flex>
   );
