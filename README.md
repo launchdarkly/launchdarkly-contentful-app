@@ -56,13 +56,19 @@ This project integrates [LaunchDarkly](https://launchdarkly.com/) feature flags 
 1. **Go to the [Contentful App Marketplace](https://app.contentful.com/spaces/<your-space-id>/apps/marketplace) and select "Add app".**
    - Replace `<your-space-id>` with your actual Contentful space ID.
    - [Official guide: Installing apps](https://www.contentful.com/developers/docs/extensibility/app-framework/)
+   
+   ![Contentful App Marketplace with 'Add app' button highlighted]()
 
 2. **For local testing:**
    - Use your local dev URL (e.g., `http://localhost:3000` or your ngrok URL) as the app's location.
-   - You can also use the [Contentful CLI](https://www.contentful.com/developers/docs/cli/) to install the app for local development.
+   - You can also use the [Contentful CLI](https://www.contentful.com/developers/docs/cli/) to install the app for local development, however for this project it's suggested to do this step within the Contentful UI itself.
+   
+   ![App installation dialog in Contentful UI with local URL entered]()
 
 3. **Install the app** into your target Contentful space.
    - [How to install a custom app](https://www.contentful.com/developers/docs/extensibility/app-framework/install-custom-app/)
+   
+   ![App listed as installed in Contentful space]()
 
 4. **Permissions:**
    - Ensure the app has access to the content types and entries you want to test with.
@@ -75,16 +81,22 @@ This project integrates [LaunchDarkly](https://launchdarkly.com/) feature flags 
 
 1. **Open the app's Config screen** in Contentful (usually found in the sidebar under "Apps").
    - [Navigating to installed apps](https://www.contentful.com/developers/docs/extensibility/app-framework/)
+   
+   ![App config screen in Contentful sidebar]()
 
 2. **Enter your LaunchDarkly API key:**
    - This should be a **server-side SDK key** or a **personal access token** with at least read access to the relevant project and environment.
    - You can find or create API keys in your LaunchDarkly dashboard under [Account settings > API access](https://app.launchdarkly.com/settings#/access-tokens).
    - [LaunchDarkly API access documentation](https://docs.launchdarkly.com/home/account-security/api-access-tokens)
+   
+   ![LaunchDarkly dashboard showing API key creation]()
 
 3. **Select your LaunchDarkly project and environment:**
    - The app will fetch available projects and environments using your API key.
    - Choose the project and environment you want to use for flag management.
    - [Managing projects and environments in LaunchDarkly](https://docs.launchdarkly.com/home/projects)
+   
+   ![Project and environment selection dropdowns in app config]()
 
 4. **Save the configuration.**
 
@@ -99,6 +111,8 @@ To test flag-driven content, you must add the app to the Entry Editor location f
 1. **Go to [Content Model](https://app.contentful.com/spaces/<your-space-id>/content_model) in your Contentful space.**
    - Replace `<your-space-id>` with your actual Contentful space ID.
    - [Contentful content model documentation](https://www.contentful.com/developers/docs/concepts/data-model/)
+   
+   ![Contentful content model overview page]()
 
 2. For each content type you want to use with LaunchDarkly:
    - Click the content type to edit it.
@@ -106,6 +120,8 @@ To test flag-driven content, you must add the app to the Entry Editor location f
    - Under **Entry Editor**, click **Add app**.
    - Select **LaunchDarkly + Contentful** app from the list.
    - Click **Save** to apply the changes.
+   
+   ![Adding app to Entry Editor location in content type settings]()
 
    > **Tip:** You can add the app to multiple content types if you want to test flagging across different models.
 
@@ -121,6 +137,8 @@ To test flag-driven content, you must add the app to the Entry Editor location f
   - Toggle feature flags on/off and observe how the UI updates.
   - Assign different content or fields to each flag variation.
   - Save the entry and verify that the flag/content mapping persists.
+  
+  ![Entry editor with LaunchDarkly flag controls and variation mapping visible]()
 
 ### Debugging
 
@@ -131,6 +149,8 @@ To test flag-driven content, you must add the app to the Entry Editor location f
 
 - **Error notifications:**
   - Errors are shown in-app (via Contentful's notification system) and logged to the browser console.
+  
+  ![Example error notification in Contentful UI]()
 
 - **API issues:**
   - If you see errors about missing or invalid API keys, double-check your LaunchDarkly API key in the Config screen.
@@ -183,6 +203,8 @@ To test flag-driven content, you must add the app to the Entry Editor location f
 - Use the deployed URL as the app's location in Contentful app settings ([Contentful app settings](https://app.contentful.com/spaces/<your-space-id>/apps)).
 - Make sure to manage environment variables and API keys securely in production deployments ([12-factor app config](https://12factor.net/config)).
 - After deployment, repeat the app installation and configuration steps in your production Contentful space.
+
+   ![Deployed app URL entered in Contentful app settings]()
 
 ---
 
