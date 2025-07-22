@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         const url = `${apiUrl}/flags/${projectKey}?limit=100`;
         res = await fetch(url, {
           headers: {
-            'Authorization': apiKey,
+            'Authorization': apiKey.startsWith('api-') ? apiKey : `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
             const listUrl = `${apiUrl}/projects/${projectKey}/environments?limit=${limit}&offset=${offset}`;
             res = await fetch(listUrl, {
               headers: {
-                'Authorization': apiKey,
+                'Authorization': apiKey.startsWith('api-') ? apiKey : `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
               },
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
                   const detailUrl = `${apiUrl}/projects/${projectKey}/environments/${env.key}`;
                   const detailRes = await fetch(detailUrl, {
                     headers: {
-                      'Authorization': apiKey,
+                      'Authorization': apiKey.startsWith('api-') ? apiKey : `Bearer ${apiKey}`,
                       'Content-Type': 'application/json',
                       'Accept': 'application/json',
                     },
@@ -85,41 +85,51 @@ export async function POST(req: NextRequest) {
         break;
       }
       case 'getProjects': {
-        const url = `${apiUrl}/projects?limit=100`;
-        res = await fetch(url, {
-          headers: {
-            'Authorization': apiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-        
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`Failed to fetch projects: ${res.status} ${res.statusText} - ${errorText}`);
+        console.log('[API] getProjects called with API key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'undefined');
+    console.log('[API] API key starts with api-:', apiKey?.startsWith('api-'));
+    console.log('[API] Authorization header will be:', apiKey?.startsWith('api-') ? 'api-...' : 'Bearer api-...');
+        let allItems: any[] = [];
+        let offset = 0;
+        const limit = 100;
+        let totalCount = 0;
+        try {
+          do {
+            const url = `${apiUrl}/projects?limit=${limit}&offset=${offset}`;
+            console.log('[API] Fetching projects from:', url);
+            res = await fetch(url, {
+              headers: {
+                'Authorization': apiKey.startsWith('api-') ? apiKey : `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+            });
+            
+            console.log('[API] Projects response status:', res.status);
+            if (!res.ok) {
+              const errorText = await res.text();
+              console.error('[API] Projects fetch error:', res.status, res.statusText, errorText);
+              throw new Error(`Failed to fetch projects: ${res.status} ${res.statusText} - ${errorText}`);
+            }
+            
+            const page = await res.json();
+            console.log('[API] Projects page response:', JSON.stringify(page, null, 2));
+            if (page.items) {
+              allItems = allItems.concat(page.items);
+            } else {
+              console.log('[API] No items found in response, page structure:', Object.keys(page));
+            }
+            totalCount = page.totalCount || 0;
+            offset += limit;
+          } while (allItems.length < totalCount);
+          body = { items: allItems, totalCount };
+          console.log('[API] Total projects found:', allItems.length);
+        } catch (error) {
+          console.error('[API] getProjects error:', error);
+          throw error;
         }
-        
-        body = await res.json();
         break;
       }
-      case 'updateFlagVariations': {
-        const { flagKey, projectKey, instructions } = params;
-        if (!flagKey || !projectKey || !instructions) {
-          return NextResponse.json({ status: 400, body: { error: 'Missing required parameters' } }, { status: 400 });
-        }
-        const url = `${apiUrl}/flags/${projectKey}/${flagKey}`;
-        res = await fetch(url, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': apiKey,
-            'Content-Type': 'application/json; domain-model=launchdarkly.semanticpatch',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({ instructions }),
-        });
-        body = await res.json();
-        break;
-      }
+
       case 'getFlagDetails': {
         const { flagKey, projectKey } = params;
         if (!flagKey || !projectKey) {
@@ -128,7 +138,7 @@ export async function POST(req: NextRequest) {
         const url = `${apiUrl}/flags/${projectKey}/${flagKey}`;
         res = await fetch(url, {
           headers: {
-            'Authorization': apiKey,
+            'Authorization': apiKey.startsWith('api-') ? apiKey : `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
@@ -137,7 +147,37 @@ export async function POST(req: NextRequest) {
         console.log('[API] getFlagDetails response:', body);
         break;
       }
-      // Add more actions as needed
+      case 'createFlag': {
+        const { projectKey, flagData } = params;
+        if (!projectKey || !flagData) {
+          return NextResponse.json({ status: 400, body: { error: 'Missing projectKey or flagData' } }, { status: 400 });
+        }
+        
+        // Validate required fields
+        if (!flagData.name || !flagData.key || !flagData.kind || !flagData.variations) {
+          return NextResponse.json({ 
+            status: 400, 
+            body: { error: 'Missing required flag fields: name, key, kind, variations' } 
+          }, { status: 400 });
+        }
+
+        const url = `${apiUrl}/flags/${projectKey}`;
+        res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': apiKey.startsWith('api-') ? apiKey : `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(flagData),
+        });
+        body = await res.json();
+        console.log('[API] createFlag response:', body);
+        break;
+      }
+
+
+      // Only safe, read-only + creation endpoints allowed
       default:
         return NextResponse.json({ status: 400, body: { error: 'Unknown action' } }, { status: 400 });
     }

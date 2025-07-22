@@ -15,8 +15,20 @@ export const useFlags = (search: string = '') => {
         setLoading(true);
         clearError();
 
-        const apiKey = sdk.parameters.installation.launchDarklyApiKey;
-        const projectKey = sdk.parameters.installation.launchDarklyProjectKey;
+        // Try both parameter access methods for compatibility
+        let apiKey, projectKey, parameters;
+        
+        if ('app' in sdk && typeof sdk.app.getParameters === 'function') {
+          parameters = await sdk.app.getParameters();
+          apiKey = parameters?.launchDarklyApiKey;
+          projectKey = parameters?.launchDarklyProjectKey;
+        } else {
+          apiKey = sdk.parameters?.installation?.launchDarklyApiKey;
+          projectKey = sdk.parameters?.installation?.launchDarklyProjectKey;
+          parameters = sdk.parameters?.installation;
+        }
+
+
 
         if (!apiKey || !projectKey) {
           handleError('Missing API key or project key');

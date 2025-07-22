@@ -120,7 +120,7 @@ export const VariationContentSelector: React.FC<VariationContentSelectorProps> =
     <>
       <Popover isOpen={isOpen} onClose={() => setIsOpen(false)}>
         <Popover.Trigger>
-          <Button onClick={() => setIsOpen(true)}>
+          <Button onClick={() => setIsOpen(!isOpen)}>
             Select Content
           </Button>
         </Popover.Trigger>

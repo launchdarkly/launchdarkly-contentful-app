@@ -41,11 +41,23 @@ export function useFlagData({ flagKey, projectKey }: UseFlagDataProps) {
         return;
       }
 
+      // Check if SDK parameters are available using compatible method
+      let apiKey, parameters;
+      if ('app' in sdk && typeof sdk.app.getParameters === 'function') {
+        parameters = await sdk.app.getParameters();
+        apiKey = parameters?.launchDarklyApiKey;
+      } else {
+        apiKey = sdk.parameters?.installation?.launchDarklyApiKey;
+        parameters = sdk.parameters?.installation;
+      }
+      
+
+
       setLoading(true);
       setError(null);
 
       try {
-        const response = await callAppAction(sdk, 'getFlag', { 
+        const response = await callAppAction(sdk, 'getFlagDetails', { 
           projectKey,
           flagKey 
         });

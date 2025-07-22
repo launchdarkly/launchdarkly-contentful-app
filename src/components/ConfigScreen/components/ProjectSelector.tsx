@@ -4,6 +4,7 @@ import {
   Select,
   Spinner,
   Text,
+  Note,
 } from '@contentful/f36-components';
 import { Project } from '../types';
 
@@ -31,6 +32,11 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
           <Spinner size="small" />
           <Text>Loading projects...</Text>
         </div>
+        {projectKey && (
+          <Note variant="primary" style={{ marginTop: '8px' }}>
+            Current selection: {projectKey}
+          </Note>
+        )}
       </FormControl>
     );
   }
@@ -40,6 +46,11 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
       <FormControl>
         <FormControl.Label>Project</FormControl.Label>
         <Text fontColor="gray600">No projects found</Text>
+        {projectKey && (
+          <Note variant="warning" style={{ marginTop: '8px' }}>
+            Previously selected project "{projectKey}" not found. Please verify your API key or select a different project.
+          </Note>
+        )}
       </FormControl>
     );
   }
