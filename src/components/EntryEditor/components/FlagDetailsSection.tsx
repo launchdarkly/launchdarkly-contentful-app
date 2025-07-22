@@ -25,6 +25,7 @@ interface FlagDetailsSectionProps {
   setEnhancedVariationContent: React.Dispatch<React.SetStateAction<Record<number, EnhancedContentfulEntry>>>;
   validationErrors?: Record<string, string>;
   configuredProjectKey: string;
+  configuredEnvironment: string;
   createFlag: (projectKey: string, flagData: CreateFlagData) => Promise<any>;
   flagCreationLoading: boolean;
   onFlagCreated?: (flag: any) => void;
@@ -42,12 +43,14 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
   setEnhancedVariationContent,
   validationErrors = {},
   configuredProjectKey,
+  configuredEnvironment,
   createFlag,
   flagCreationLoading,
   onFlagCreated
 }) => {
   const sdk = useSDK<EditorAppSDK>();
   const [flagCreated, setFlagCreated] = useState(false);
+  const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
 
   useEffect(() => {
     if (launchDarklyFlags.length && formState.key) {
@@ -58,13 +61,27 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
     }
   }, [launchDarklyFlags, formState.key, onSearchChange]);
 
+  // Reset manual edit tracking when mode changes or flag is created
+  useEffect(() => {
+    if (formState.mode === 'new' && !flagCreated) {
+      setKeyManuallyEdited(false);
+    }
+  }, [formState.mode, flagCreated]);
+
   // Auto-generate key from name for new flags
   const handleNameChange = (value: string) => {
     onFormChange('name', value);
-    if (formState.mode === 'new' && value && !formState.key) {
+    // Only auto-generate key if user hasn't manually edited it and we're in create mode
+    if (formState.mode === 'new' && value && !keyManuallyEdited && !flagCreated) {
       const generatedKey = sanitizeFlagKey(value);
       onFormChange('key', generatedKey);
     }
+  };
+
+  // Handle manual key changes
+  const handleKeyChange = (value: string) => {
+    setKeyManuallyEdited(true);
+    onFormChange('key', value);
   };
 
   // Handle existing flag selection and loading details
@@ -163,42 +180,67 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
     }
   };
 
+  // Handle transition to content mapping mode
+  const handleStartContentMapping = () => {
+    // Switch to existing flag mode to start content mapping
+    onFormChange('mode', 'existing');
+    sdk.notifier.success('Switched to content mapping mode!');
+  };
+
   return (
     <Card padding="default">
       <Box paddingLeft="spacingM" paddingRight="spacingM">
         <Heading marginBottom="spacingL">
-          Step 2: {formState.mode === 'new' ? 'Create Flag Details' : 'Select Existing Flag'}
+          {formState.mode === 'new' ? 'Create Flag Details' : 'Select Existing Flag'}
         </Heading>
 
-        {/* Existing Flag Mode */}
+        {/* Existing Flag Mode / Content Mapping Mode */}
         {formState.mode === 'existing' && (
-          <Form>
-            <FormControl>
-              <Flex alignItems="center" gap="spacingXs">
-                <FormControl.Label>Search Existing Flags</FormControl.Label>
-                <Tooltip content="Search and choose an existing LaunchDarkly feature flag to link">
-                  <InfoCircleIcon variant="secondary" size="tiny" />
-                </Tooltip>
-              </Flex>
-              <Autocomplete
-                id="flag-autocomplete"
-                items={launchDarklyFlags}
-                onInputValueChange={onSearchChange}
-                onSelectItem={handleExistingFlagSelect}
-                itemToString={(item) => (item ? `${item.name} (${item.key})` : '')}
-                isLoading={flagsLoading}
-                renderItem={(item) => item ? (
-                  <Stack spacing="spacingXs">
-                    <Text fontWeight="fontWeightMedium">{item.name}</Text>
-                    <Text fontColor="gray600" fontSize="fontSizeS">({item.key})</Text>
-                  </Stack>
-                ) : null}
-                inputValue={search}
-                selectedItem={launchDarklyFlags.find(flag => flag.key === formState.key) || null}
-                placeholder="Search by name or key..."
-              />
-            </FormControl>
-          </Form>
+          <div>
+            {/* Existing flag selection */}
+            <div style={{ marginBottom: '24px' }}>
+              <FormControl>
+                <Flex alignItems="center" gap="spacingXs">
+                  <FormControl.Label>Select Flag</FormControl.Label>
+                  <Tooltip content="Search and choose an existing LaunchDarkly feature flag to link">
+                    <InfoCircleIcon variant="secondary" size="tiny" />
+                  </Tooltip>
+                </Flex>
+                <Autocomplete
+                  id="flag-autocomplete"
+                  items={launchDarklyFlags}
+                  onInputValueChange={onSearchChange}
+                  onSelectItem={handleExistingFlagSelect}
+                  itemToString={(item) => (item ? `${item.name} (${item.key})` : '')}
+                  isLoading={flagsLoading}
+                  renderItem={(item) => item ? (
+                    <Stack spacing="spacingXs">
+                      <Text fontWeight="fontWeightMedium">{item.name}</Text>
+                      <Text fontColor="gray600" fontSize="fontSizeS">({item.key})</Text>
+                    </Stack>
+                  ) : null}
+                  inputValue={search}
+                  selectedItem={launchDarklyFlags.find(flag => flag.key === formState.key) || null}
+                  placeholder="Search by name or key..."
+                />
+              </FormControl>
+            </div>
+
+            {/* Show content mapping only after flag is selected */}
+            {formState.key && (
+              <div style={{ marginTop: '24px', borderTop: '1px solid #e5e8ed', paddingTop: '24px' }}>
+                <Heading as="h3" marginBottom="spacingM">Map Content to Variations</Heading>
+                <VariationContentSection
+                  variations={formState.variations}
+                  flagDetails={formState.flagDetails}
+                  enhancedVariationContent={enhancedVariationContent}
+                  onSelectContent={handleSelectVariationContent}
+                  onEditEntry={handleEditEntry}
+                  onRemoveContent={handleRemoveVariationContent}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {/* New Flag Mode */}
@@ -237,12 +279,18 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                         <InfoCircleIcon variant="secondary" size="tiny" />
                       </Tooltip>
                     </Flex>
-                    <TextInput
-                      value={formState.name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      placeholder="My New Feature"
-                      style={{ width: '100%' }}
-                    />
+                    <Tooltip 
+                      content={flagCreated ? "Flag name cannot be changed after creation. You can modify it in LaunchDarkly directly." : "The human-readable name of your feature flag as it will appear in LaunchDarkly"}
+                      isVisible={flagCreated}
+                    >
+                      <TextInput
+                        value={formState.name}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        placeholder="My New Feature"
+                        style={{ width: '100%' }}
+                        isDisabled={flagCreated}
+                      />
+                    </Tooltip>
                     {validationErrors.name && (
                       <FormControl.ValidationMessage>{validationErrors.name}</FormControl.ValidationMessage>
                     )}
@@ -264,12 +312,18 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                         <InfoCircleIcon variant="secondary" size="tiny" />
                       </Tooltip>
                     </Flex>
-                    <TextInput
-                      value={formState.key}
-                      onChange={(e) => onFormChange('key', e.target.value)}
-                      placeholder="my-new-feature"
-                      style={{ width: '100%' }}
-                    />
+                    <Tooltip 
+                      content={flagCreated ? "Flag key cannot be changed after creation. You can modify it in LaunchDarkly directly." : "The unique identifier for this flag in your code"}
+                      isVisible={flagCreated}
+                    >
+                      <TextInput
+                        value={formState.key}
+                        onChange={(e) => handleKeyChange(e.target.value)}
+                        placeholder="my-new-feature"
+                        style={{ width: '100%' }}
+                        isDisabled={flagCreated}
+                      />
+                    </Tooltip>
                     {validationErrors.key && (
                       <FormControl.ValidationMessage>{validationErrors.key}</FormControl.ValidationMessage>
                     )}
@@ -291,13 +345,19 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                         <InfoCircleIcon variant="secondary" size="tiny" />
                       </Tooltip>
                     </Flex>
-                    <Textarea
-                      value={formState.description}
-                      onChange={(e) => onFormChange('description', e.target.value)}
-                      rows={3}
-                      placeholder="Describe what this flag controls..."
-                      style={{ width: '100%' }}
-                    />
+                    <Tooltip 
+                      content={flagCreated ? "Flag description cannot be changed after creation. You can modify it in LaunchDarkly directly." : "A detailed explanation of what this feature flag controls"}
+                      isVisible={flagCreated}
+                    >
+                      <Textarea
+                        value={formState.description}
+                        onChange={(e) => onFormChange('description', e.target.value)}
+                        rows={3}
+                        placeholder="Describe what this flag controls..."
+                        style={{ width: '100%' }}
+                        isDisabled={flagCreated}
+                      />
+                    </Tooltip>
                     {validationErrors.description && (
                       <FormControl.ValidationMessage>{validationErrors.description}</FormControl.ValidationMessage>
                     )}
@@ -332,34 +392,50 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                 </Flex>
               )}
 
-              {/* Flag created success message */}
+              {/* Flag created success message with next steps */}
               {flagCreated && (
-                <Note variant="positive" style={{ marginTop: '16px' }}>
-                  Flag successfully created in LaunchDarkly! You can now proceed to map content.
-                </Note>
+                <Card padding="default" style={{ backgroundColor: '#f0f9ff', border: '2px solid #3b82f6' }}>
+                  <Stack spacing="spacingL" flexDirection="column" alignItems="flex-start" marginBottom="spacingS">
+                    <Stack spacing="spacingS" alignItems="flex-start" flexDirection="column" marginBottom="spacingS">
+                      <Note variant="positive">
+                        🎉 Flag "{formState.name}" created successfully in LaunchDarkly!
+                      </Note>
+                      
+                      <Text>
+                        Your flag is now live in LaunchDarkly but <strong>turned off by default</strong> in all environments. 
+                        To use this flag with Contentful, you can now map content to its variations. You can change the flag name and key <strong>in LaunchDarkly</strong> if needed.
+                      </Text>
+                    </Stack>
+                    
+                    <Stack spacing="spacingM">
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          // Use the configured environment, fallback to production if not set
+                          const envKey = configuredEnvironment || 'production';
+                          const flagUrl = `https://app.launchdarkly.com/projects/${configuredProjectKey}/flags/${formState.key}/targeting?env=${envKey}&selected-env=${envKey}`;
+                          window.open(flagUrl, '_blank');
+                        }}
+                      >
+                        View in LaunchDarkly
+                      </Button>
+                      
+                      <Button
+                        variant="primary"
+                        onClick={handleStartContentMapping}
+                      >
+                        Start Content Mapping →
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Card>
               )}
             </div>
           </Form>
         )}
       </Box>
 
-      {/* Show content mapping only after flag exists (either selected existing or created new) */}
-      {formState.key && (
-        (formState.mode === 'existing' || (formState.mode === 'new' && flagCreated))
-      ) && (
-        <div style={{ marginTop: '24px', borderTop: '1px solid #e5e8ed', paddingTop: '24px' }}>
-          <Heading as="h3" marginBottom="spacingM">Step 3: Map Content to Variations</Heading>
-          {/* Variation Content Mapping Section */}
-          <VariationContentSection
-            variations={formState.variations}
-            flagDetails={formState.flagDetails}
-            enhancedVariationContent={enhancedVariationContent}
-            onSelectContent={handleSelectVariationContent}
-            onEditEntry={handleEditEntry}
-            onRemoveContent={handleRemoveVariationContent}
-          />
-        </div>
-      )}
+
     </Card>
   );
 }; 

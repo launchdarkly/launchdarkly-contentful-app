@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Flex, Heading, Modal, Text } from '@contentful/f36-components';
+import { Card, Button, Flex, Heading, Modal, Text, Stack } from '@contentful/f36-components';
 import { FlagMode } from '@/types/launchdarkly';
 
 interface ModeSelectionProps {
@@ -52,10 +52,18 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({
   return (
     <>
       <Card padding="default" style={{ marginBottom: '16px' }}>
-        <Heading as="h3" marginBottom="spacingL" style={{ fontSize: '18px', fontWeight: 'semiBold' }}>
-          Step 1: Choose your flag mode
+        <Heading as="h3" style={{ fontSize: '18px', fontWeight: 'semiBold', marginBottom: '6px' }}>
+          Choose what you want to do
         </Heading>
-        <Flex justifyContent="center" gap="spacingL">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          <Text fontColor="gray600">
+            These are two separate processes. You can create a flag or you can map content to existing flag variations.
+          </Text>
+          <Text fontColor="gray600" style={{ fontStyle: 'italic' }}>
+            * You cannot modify existing flags or flag variations.
+          </Text>
+        </div>
+        <Flex justifyContent="flex-start" gap="spacingL" marginTop="spacingL">
           <Button
             variant={flagMode === 'new' ? 'primary' : 'secondary'}
             onClick={() => handleModeChange('new')}
@@ -68,7 +76,7 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({
             onClick={() => handleModeChange('existing')}
             size="medium"
           >
-            Use Existing Flag
+            Map Content to Flag
           </Button>
         </Flex>
       </Card>

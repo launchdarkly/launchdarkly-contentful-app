@@ -6,6 +6,7 @@ import {
   Spinner,
   Note,
   Paragraph,
+  Text,
 } from '@contentful/f36-components';
 
 interface ApiKeySectionProps {
@@ -39,6 +40,12 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({
         Enter your LaunchDarkly API key to connect to your account
       </Paragraph>
       
+      {apiKey && !validation.isValid && !validation.isValidating && (
+        <Note variant="warning" style={{ marginBottom: '12px' }}>
+          API key is stored but needs to be re-validated. Please click "Verify" to confirm your credentials.
+        </Note>
+      )}
+      
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <TextInput
           name="apiKey"
@@ -71,7 +78,7 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({
           {validation.isValidating ? (
             <Spinner size="small" />
           ) : validation.isValid ? (
-            'Verified'
+            'Re-verify'
           ) : (
             'Verify'
           )}
@@ -80,6 +87,12 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({
       
       {validation.error && (
         <Note variant="negative">{validation.error}</Note>
+      )}
+      
+      {validation.isValid && (
+        <Note variant="positive">
+          ✓ API key is valid and connected to LaunchDarkly
+        </Note>
       )}
     </FormControl>
   );

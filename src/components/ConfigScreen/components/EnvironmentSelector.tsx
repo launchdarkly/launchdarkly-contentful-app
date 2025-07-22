@@ -4,6 +4,7 @@ import {
   Select,
   Spinner,
   Text,
+  Note,
 } from '@contentful/f36-components';
 import { Environment } from '../types';
 
@@ -31,6 +32,11 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({
           <Spinner size="small" />
           <Text>Loading environments...</Text>
         </div>
+        {environmentKey && (
+          <Note variant="primary" style={{ marginTop: '8px' }}>
+            Current selection: {environmentKey}
+          </Note>
+        )}
       </FormControl>
     );
   }
@@ -42,6 +48,11 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({
         <Text fontColor="gray600">
           No environments found. Please select a project first.
         </Text>
+        {environmentKey && (
+          <Note variant="warning" style={{ marginTop: '8px' }}>
+            Previously selected environment "{environmentKey}" not found. Please verify your project selection or choose a different environment.
+          </Note>
+        )}
       </FormControl>
     );
   }

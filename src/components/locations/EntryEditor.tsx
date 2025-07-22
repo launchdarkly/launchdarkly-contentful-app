@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 
 import { FlagDetailsSection } from '../EntryEditor/components/FlagDetailsSection';
 import { ModeSelection } from '../EntryEditor/components/ModeSelection';
+
 import { ErrorBoundary } from '../../components/ErrorBoundary/index';
 
 import { useErrorState, useFlags, useUnsavedChanges, useFlagCreation } from '@/hooks';
@@ -16,10 +17,15 @@ import { validateFlagData } from '@/utils/validation';
 import { EnhancedContentfulEntry, FlagFormState } from '../EntryEditor/types';
 import { FlagMode, CreateFlagData } from '@/types/launchdarkly';
 
+const FLAG_CONTENT_TYPE_ID = 'launchDarklyFeatureFlag';
+
 const EntryEditor = () => {
   const sdk = useSDK<EditorAppSDK>();
   const { error, handleError, clearError } = useErrorState('EntryEditor');
   const [enhancedVariationContent, setEnhancedVariationContent] = useState<Record<number, EnhancedContentfulEntry>>({});
+  
+  // Add state to track if we have existing content mappings
+  const [hasExistingMappings, setHasExistingMappings] = useState(false);
   
   // Basic form state with proper defaults for enhanced FlagFormState
   const [formState, setFormState] = useState<FlagFormState>({
@@ -56,8 +62,9 @@ const EntryEditor = () => {
   const [loading, setLoading] = useState({ entry: true, saving: false });
   // Track if initial load is complete
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  // Store configured project key from app parameters
+  // Store configured project key and environment from app parameters
   const [configuredProjectKey, setConfiguredProjectKey] = useState<string>('');
+  const [configuredEnvironment, setConfiguredEnvironment] = useState<string>('');
   // UI state
   const [search, setSearch] = useState('');
   const { flags: launchDarklyFlags, loading: flagsLoading } = useFlags(search);
@@ -82,21 +89,30 @@ const EntryEditor = () => {
       try {
         setLoading(prev => ({ ...prev, entry: true }));
         
-        // Get configured project key from app parameters (compatible with different SDK types)
+        // Get configured project key and environment from app parameters (compatible with different SDK types)
         let projectKey = '';
+        let environment = '';
         if ('app' in sdk && typeof (sdk as any).app?.getParameters === 'function') {
           const appParameters = await (sdk as any).app.getParameters();
           projectKey = appParameters?.launchDarklyProjectKey || '';
+          environment = appParameters?.launchDarklyEnvironment || '';
         } else {
           projectKey = (sdk as any).parameters?.installation?.launchDarklyProjectKey || '';
+          environment = (sdk as any).parameters?.installation?.launchDarklyEnvironment || '';
         }
         setConfiguredProjectKey(projectKey);
+        setConfiguredEnvironment(environment);
         
         const fields = sdk.entry.fields;
+        
+        // Check if there are existing content mappings
+        const existingFlagDetails = fields.flagDetails?.getValue() || {};
+        const hasMappings = Object.keys(existingFlagDetails).length > 0;
+        setHasExistingMappings(hasMappings);
   
         const savedState: FlagFormState = {
           variations: fields.variations?.getValue() || [],
-          flagDetails: fields.flagDetails?.getValue() || {},
+          flagDetails: existingFlagDetails,
           name: fields.name?.getValue() || '',
           key: fields.key?.getValue() || '',
           description: fields.description?.getValue() || '',
@@ -105,7 +121,8 @@ const EntryEditor = () => {
           defaultVariation: fields.defaultVariation?.getValue() || 0,
           tags: fields.tags?.getValue() || [],
           temporary: fields.temporary?.getValue() || false,
-          mode: fields.mode?.getValue() || null,
+          // Auto-set mode to 'existing' if there are existing mappings, otherwise use saved mode or null
+          mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null),
           rolloutStrategy: fields.rolloutStrategy?.getValue(),
           rolloutConfig: fields.rolloutConfig?.getValue() || {
             percentage: 0,
@@ -304,9 +321,15 @@ const EntryEditor = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle saving
+  // Handle saving - now only for content mapping mode
   const handleSave = async () => {
     if (isSaving) return;
+    
+    // Only allow saving in existing/mapping mode
+    if (formState.mode !== 'existing') {
+      sdk.notifier.error('Saving is only available in content mapping mode.');
+      return;
+    }
     
     // Validate form before saving
     if (!validateForm()) {
@@ -317,19 +340,19 @@ const EntryEditor = () => {
     try {
       setLoading(prev => ({ ...prev, saving: true }));
 
-      // For create mode, flag creation should have already happened in FlagDetailsSection
-      if (formState.mode === 'new' && !formState.key) {
-        sdk.notifier.error('Please create the flag first before saving.');
+      // Ensure we have a flag selected for content mapping
+      if (!formState.key) {
+        sdk.notifier.error('Please select a flag before saving content mapping.');
         return;
       }
 
-      // Now save to Contentful
+      // Now save content mapping to Contentful
       const simpleMapping = extractSimpleContentMapping({
         ...formState,
         enhancedVariationContent,
       });
 
-      console.log('Saving to Contentful:', {
+      console.log('Saving content mapping to Contentful:', {
         variations: formState.variations,
         flagDetails: simpleMapping,
         name: formState.name,
@@ -367,6 +390,9 @@ const EntryEditor = () => {
     }
   };
 
+  // Get the current entry's content type ID
+  const contentTypeId = sdk.entry.getSys().contentType.sys.id;
+
   if (loading.entry || (flagsLoading && !launchDarklyFlags)) {
     return (
       <ErrorBoundary componentName="EntryEditor" onError={handleError}>
@@ -379,7 +405,7 @@ const EntryEditor = () => {
 
   return (
     <ErrorBoundary componentName="EntryEditor" onError={handleError}>
-      <div style={{ maxWidth: '100%', margin: '0 auto', padding: '16px' }}>
+      <div style={{ maxWidth: '100%', margin: '0 auto', padding: '16px', paddingBottom: '32px' }}>
         {error.message && (
           <Note variant="negative" style={{ marginBottom: '16px' }}>{error.message}</Note>
         )}
@@ -401,22 +427,35 @@ const EntryEditor = () => {
             <Box paddingLeft="spacingM" paddingRight="spacingM">
               <Heading marginBottom='spacing2Xs'>LaunchDarkly Flag Management</Heading>
               <Text fontColor="gray600">
-                Create a new feature flag or link an existing one to this entry.
+                {hasExistingMappings 
+                  ? 'Manage your existing content mappings for this entry.'
+                  : 'Create a new feature flag or link an existing one to this entry.'
+                }
               </Text>
+              
+              {!hasExistingMappings && (
+                <Card padding="default" style={{ backgroundColor: '#f0f9ff', border: '2px solid #3b82f6', marginTop: '16px' }}>
+                  <Text fontColor="gray700" fontSize="fontSizeS">
+                    <strong>Note:</strong> Feature flags are the basis for <strong>Experimentation</strong> in LaunchDarkly. If you need more information about Experiments in LaunchDarkly, see our documentation here: <a href="https://docs.launchdarkly.com/docs/experiments" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline' }}>https://docs.launchdarkly.com/docs/experiments</a>
+                  </Text>
+                </Card>
+              )}
             </Box>
           </Card>
 
-          {/* Mode Selection */}
-          <ModeSelection
-            flagMode={formState.mode}
-            onModeChange={handleModeChange}
-            onLoadExistingFlags={loadExistingFlags}
-            hasUnsavedChanges={hasUnsavedChanges}
-            onResetForm={resetForm}
-          />
+          {/* Mode Selection - only show if no existing mappings */}
+          {!hasExistingMappings && (
+            <ModeSelection
+              flagMode={formState.mode}
+              onModeChange={handleModeChange}
+              onLoadExistingFlags={loadExistingFlags}
+              hasUnsavedChanges={hasUnsavedChanges}
+              onResetForm={resetForm}
+            />
+          )}
 
-          {/* Show flag details only after mode is selected */}
-          {formState.mode && (
+          {/* Show flag details if mode is selected OR if we have existing mappings */}
+          {(formState.mode || hasExistingMappings) && (
             <FlagDetailsSection
               formState={formState}
               launchDarklyFlags={launchDarklyFlags || []}
@@ -433,6 +472,7 @@ const EntryEditor = () => {
               setEnhancedVariationContent={setEnhancedVariationContent}
               validationErrors={validationErrors}
               configuredProjectKey={configuredProjectKey}
+              configuredEnvironment={configuredEnvironment}
               createFlag={createFlag}
               flagCreationLoading={flagCreationLoading}
               onFlagCreated={(flag) => {
@@ -442,19 +482,13 @@ const EntryEditor = () => {
             />
           )}
 
-
-
-          {/* Save button - show after flag is selected/created and content mapping is available */}
-          {formState.mode && formState.key && (
-            (formState.mode === 'existing' || (formState.mode === 'new'))
-          ) && (
+          {/* Save button - always show but disable when not ready */}
+          {formState.mode === 'existing' && (
             <Flex justifyContent="flex-end" marginTop="spacingL">
               <Button
                 variant="primary"
                 onClick={handleSave}
-                isDisabled={
-                  !formState.key || loading.saving
-                }
+                isDisabled={loading.saving || !formState.key || Object.keys(enhancedVariationContent).length === 0}
                 isLoading={loading.saving}
               >
                 {loading.saving 
@@ -464,6 +498,8 @@ const EntryEditor = () => {
               </Button>
             </Flex>
           )}
+
+          {/* FlagControls removed for security - users should only create flags, not modify them */}
         </div>
       </div>
     </ErrorBoundary>
@@ -471,3 +507,4 @@ const EntryEditor = () => {
 };
 
 export default EntryEditor;
+
