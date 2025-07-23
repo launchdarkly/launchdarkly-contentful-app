@@ -275,7 +275,7 @@ const requiredFields = [
           <Stack flexDirection="column" spacing="spacingM" alignItems="flex-start" style={{ width: '100%' }}>
             <Heading as="h3">🔧 Implementation Guide</Heading>
             <Text>
-              Once you've created flags and mapped content, here's how to implement this integration in your application:
+              Once you&#39;ve created flags and mapped content, here&#39;s how to implement this integration in your application:
             </Text>
 
             <div style={{ width: '100%' }}>
@@ -473,7 +473,7 @@ const requiredFields = [
             <div style={{ width: '100%' }}>
               <Text fontWeight="fontWeightMedium">5. React Example</Text>
               <Paragraph marginTop="spacingXs">
-                Here's a complete React component example:
+                Here&#39;s a complete React component example:
               </Paragraph>
               <div style={{ position: 'relative', display: 'inline-block' }} onMouseEnter={(e) => {
                 const button = e.currentTarget.querySelector('button');
@@ -567,7 +567,7 @@ const requiredFields = [
             <Note variant="primary">
               <Text fontWeight="fontWeightMedium">Pro Tip:</Text>
               <Paragraph marginTop="spacingXs" style={{ marginTop: '0px' }}>
-                Use LaunchDarkly's real-time updates to change content without redeploying your app. 
+                Use LaunchDarkly&#39;s real-time updates to change content without redeploying your app. 
                 The SDK will automatically receive flag changes and you can update content accordingly.
               </Paragraph>
             </Note>
