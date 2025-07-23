@@ -48,7 +48,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
         <Text fontColor="gray600">No projects found</Text>
         {projectKey && (
           <Note variant="warning" style={{ marginTop: '8px' }}>
-            Previously selected project "{projectKey}" not found. Please verify your API key or select a different project.
+            Previously selected project &quot;{projectKey}&quot; not found. Please verify your API key or select a different project.
           </Note>
         )}
       </FormControl>

@@ -183,22 +183,22 @@ const PageComponent = () => {
                   <div dangerouslySetInnerHTML={{
                     __html: `<code style="color: #e6e6e6; display: block; line-height: 1.5; white-space: pre-line;"><span style="color: #6a9955;">// Required fields for LaunchDarkly integration</span>
                         <span style="color: #569cd6;">const</span> <span style="color: #9cdcfe;">requiredFields</span> <span style="color: #d4d4d4;">=</span> <span style="color: #d4d4d4;">[</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'name'</span><span style="color: #d4d4d4;">,</span>           <span style="color: #6a9955;">// Symbol - Flag name</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'key'</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Symbol - Flag key</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'description'</span><span style="color: #d4d4d4;">,</span>      <span style="color: #6a9955;">// Text - Flag description</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'variations'</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Object - Flag variations</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'flagDetails'</span><span style="color: #d4d4d4;">,</span>       <span style="color: #6a9955;">// Object - Content mapping</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'mode'</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Symbol - Current mode</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'projectKey'</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Symbol - LaunchDarkly project</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'variationType'</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Symbol - Variation type</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'tags'</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Array - Flag tags</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'temporary'</span><span style="color: #d4d4d4;">,</span>         <span style="color: #6a9955;">// Boolean - Temporary flag</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'rolloutConfig'</span><span style="color: #d4d4d4;">,</span>      <span style="color: #6a9955;">// Object - Rollout settings</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'scheduledRelease'</span><span style="color: #d4d4d4;">,</span>   <span style="color: #6a9955;">// Object - Release schedule</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'previewSettings'</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Object - Preview settings</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'dependencies'</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Array - Flag dependencies</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'existingFlagKey'</span><span style="color: #d4d4d4;">,</span>    <span style="color: #6a9955;">// Symbol - For existing flags</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">'rolloutStrategy'</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Symbol - Rollout strategy</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;name&#39;</span><span style="color: #d4d4d4;">,</span>           <span style="color: #6a9955;">// Symbol - Flag name</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;key&#39;</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Symbol - Flag key</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;description&#39;</span><span style="color: #d4d4d4;">,</span>      <span style="color: #6a9955;">// Text - Flag description</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;variations&#39;</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Object - Flag variations</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;flagDetails&#39;</span><span style="color: #d4d4d4;">,</span>       <span style="color: #6a9955;">// Object - Content mapping</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;mode&#39;</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Symbol - Current mode</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;projectKey&#39;</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Symbol - LaunchDarkly project</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;variationType&#39;</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Symbol - Variation type</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;tags&#39;</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Array - Flag tags</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;temporary&#39;</span><span style="color: #d4d4d4;">,</span>         <span style="color: #6a9955;">// Boolean - Temporary flag</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;rolloutConfig&#39;</span><span style="color: #d4d4d4;">,</span>      <span style="color: #6a9955;">// Object - Rollout settings</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;scheduledRelease&#39;</span><span style="color: #d4d4d4;">,</span>   <span style="color: #6a9955;">// Object - Release schedule</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;previewSettings&#39;</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Object - Preview settings</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;dependencies&#39;</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Array - Flag dependencies</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;existingFlagKey&#39;</span><span style="color: #d4d4d4;">,</span>    <span style="color: #6a9955;">// Symbol - For existing flags</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;rolloutStrategy&#39;</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Symbol - Rollout strategy</span>
                         <span style="color: #d4d4d4;">];</span>
                       </code>
                     `

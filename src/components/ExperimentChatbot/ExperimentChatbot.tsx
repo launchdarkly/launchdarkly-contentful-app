@@ -68,7 +68,7 @@ const ExperimentChatbot: React.FC<ExperimentChatbotProps> = ({ entries }) => {
         <Text fontWeight="fontWeightMedium">Chat with Experiment Assistant</Text>
         <Box style={{ maxHeight: 300, overflowY: 'auto', background: '#fafafa', padding: 12, borderRadius: 4 }}>
           {messages.length === 0 && (
-            <Text fontColor="gray600">Ask a question about your experiments, e.g. "How would you measure the impact of the homepage banner test?"</Text>
+            <Text fontColor="gray600">Ask a question about your experiments, e.g. &quot;How would you measure the impact of the homepage banner test?&quot;</Text>
           )}
           {messages.map((msg, idx) => (
             <Box key={idx} marginBottom="spacingXs" style={{ textAlign: msg.role === 'user' ? 'right' : 'left' }}>

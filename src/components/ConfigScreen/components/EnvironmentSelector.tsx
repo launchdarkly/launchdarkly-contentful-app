@@ -50,7 +50,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({
         </Text>
         {environmentKey && (
           <Note variant="warning" style={{ marginTop: '8px' }}>
-            Previously selected environment "{environmentKey}" not found. Please verify your project selection or choose a different environment.
+            Previously selected environment &quot;{environmentKey}&quot; not found. Please verify your project selection or choose a different environment.
           </Note>
         )}
       </FormControl>
