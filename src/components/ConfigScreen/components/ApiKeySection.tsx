@@ -42,7 +42,7 @@ const ApiKeySection: React.FC<ApiKeySectionProps> = ({
       
       {apiKey && !validation.isValid && !validation.isValidating && (
         <Note variant="warning" style={{ marginBottom: '12px' }}>
-          API key is stored but needs to be re-validated. Please click "Verify" to confirm your credentials.
+          API key is stored but needs to be re-validated. Please click &quot;Verify&quot; to confirm your credentials.
         </Note>
       )}
       

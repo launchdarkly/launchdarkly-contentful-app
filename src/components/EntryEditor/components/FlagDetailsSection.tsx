@@ -398,7 +398,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                   <Stack spacing="spacingL" flexDirection="column" alignItems="flex-start" marginBottom="spacingS">
                     <Stack spacing="spacingS" alignItems="flex-start" flexDirection="column" marginBottom="spacingS">
                       <Note variant="positive">
-                        🎉 Flag "{formState.name}" created successfully in LaunchDarkly!
+                        🎉 Flag &quot;{formState.name}&quot; created successfully in LaunchDarkly!
                       </Note>
                       
                       <Text>
