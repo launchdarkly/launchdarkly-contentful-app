@@ -17,13 +17,16 @@ export type FlagMode = 'new' | 'existing' | null;
 // Rollout strategies
 export type RolloutStrategy = 'percentage' | 'user-segment' | 'scheduled';
 
+// Variation value types based on VariationType
+export type VariationValue = boolean | string | number | object;
+
 // Feature Flag Types
 export interface FeatureFlag {
   key: string;
   name: string;
   description?: string;
   kind: VariationType;
-  variations: Array<{ value: any; name: string }>;
+  variations: Array<{ value: VariationValue; name: string }>;
   defaultVariation: number;
   tags?: string[];
   temporary?: boolean;
@@ -56,7 +59,7 @@ export interface CreateFlagData {
   kind: VariationType;
   variations: Array<{
     name: string;
-    value: any;
+    value: VariationValue;
   }>;
   tags?: string[];
   temporary?: boolean;
@@ -88,7 +91,7 @@ export interface CreateFlagData {
 export interface PatchOperation {
   op: 'replace' | 'add' | 'remove';
   path: string;
-  value?: any;
+  value?: VariationValue;
 }
 
 // Project and Environment Types
@@ -121,10 +124,10 @@ export interface Experiment {
   status: 'DRAFT' | 'RUNNING' | 'STOPPED' | 'ARCHIVED';
   variations: Array<{
     name: string;
-    value: any;
+    value: VariationValue;
   }>;
   baselineVariation?: string;
-  audience?: any;
+  audience?: Record<string, unknown>;
   startDate?: string;
   endDate?: string;
   results?: ExperimentResults;
@@ -138,10 +141,10 @@ export interface CreateExperimentData {
   description?: string;
   variations: Array<{
     name: string;
-    value: any;
+    value: VariationValue;
   }>;
   baselineVariation?: string;
-  audience?: any;
+  audience?: Record<string, unknown>;
   tags?: string[];
 }
 
@@ -181,16 +184,19 @@ export interface LaunchDarklyResponse<T> {
 export interface LaunchDarklyError {
   code: string;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 // Utility Functions
-export const formatError = (error: any): string => {
-  if (error.response?.data?.message) {
-    return error.response.data.message;
+export const formatError = (error: unknown): string => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string } } }).response;
+    if (response?.data?.message) {
+      return response.data.message;
+    }
   }
-  if (error.message) {
-    return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
   }
   return 'An unexpected error occurred';
 };
@@ -205,7 +211,7 @@ export const validateFlagName = (name: string): boolean => {
   return name.length > 0 && name.length <= 100;
 };
 
-export const validateVariationValue = (value: any, type: VariationType): boolean => {
+export const validateVariationValue = (value: unknown, type: VariationType): boolean => {
   switch (type) {
     case 'boolean':
       return typeof value === 'boolean';
@@ -215,9 +221,12 @@ export const validateVariationValue = (value: any, type: VariationType): boolean
       return typeof value === 'number' && !isNaN(value);
     case 'json':
       try {
-        if (typeof value === 'object') return true;
-        JSON.parse(value);
-        return true;
+        if (typeof value === 'object' && value !== null) return true;
+        if (typeof value === 'string') {
+          JSON.parse(value);
+          return true;
+        }
+        return false;
       } catch {
         return false;
       }

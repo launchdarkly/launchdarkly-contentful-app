@@ -1,34 +1,36 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Card, Heading, Stack, Text, Autocomplete, Box, Form, FormControl, TextInput, Textarea, Flex, Tooltip, Switch, Note, Button } from '@contentful/f36-components';
+import { Card, Heading, Stack, Text, Autocomplete, Box, Form, FormControl, TextInput, Textarea, Flex, Tooltip, Note, Button } from '@contentful/f36-components';
 import { InfoCircleIcon } from '@contentful/f36-icons';
 import { useSDK } from '@contentful/react-apps-toolkit';
 import { EditorAppSDK } from '@contentful/app-sdk';
 import { FlagFormState, EnhancedContentfulEntry } from '../types';
-import { FlagStatus } from '../hooks/useFlagData';
 import { VariationContentSection } from './VariationContentSection';
 import { VariationsForm } from './VariationsForm';
 import { validateFlagData } from '@/utils/validation';
 import { sanitizeFlagKey } from '@/utils/validation';
-import { CreateFlagData } from '@/types/launchdarkly';
+import { CreateFlagData, FeatureFlag } from '@/types/launchdarkly';
 
 interface FlagDetailsSectionProps {
   formState: FlagFormState;
-  launchDarklyFlags: any[];
+  launchDarklyFlags: FeatureFlag[];
   flagsLoading: boolean;
   search: string;
   onSearchChange: (value: string) => void;
-  onFlagSelect: (item: any) => void;
-  onVariationsChange: (variations: any[]) => void;
-  onFormChange: (field: keyof FlagFormState, value: any) => void;
-  flagStatus: FlagStatus;
+  onFlagSelect: (item: FeatureFlag) => void;
+  onFormChange: (field: keyof FlagFormState, value: unknown) => void;
   enhancedVariationContent: Record<number, EnhancedContentfulEntry>;
   setEnhancedVariationContent: React.Dispatch<React.SetStateAction<Record<number, EnhancedContentfulEntry>>>;
   validationErrors?: Record<string, string>;
   configuredProjectKey: string;
+  /**
+   * The configured LaunchDarkly environment from app settings.
+   * Currently used for LaunchDarkly URL generation.
+   * FUTURE: Will support multi-environment features like environment-specific content mappings.
+   */
   configuredEnvironment: string;
-  createFlag: (projectKey: string, flagData: CreateFlagData) => Promise<any>;
+  createFlag: (projectKey: string, flagData: CreateFlagData) => Promise<FeatureFlag>;
   flagCreationLoading: boolean;
-  onFlagCreated?: (flag: any) => void;
+  onFlagCreated?: (flag: FeatureFlag) => void;
 }
 
 export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
@@ -85,7 +87,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
   };
 
   // Handle existing flag selection and loading details
-  const handleExistingFlagSelect = async (flag: { key: string; name: string }) => {
+  const handleExistingFlagSelect = async (flag: FeatureFlag) => {
     if (!flag) return;
     
     onFormChange('existingFlagKey', flag.key);
@@ -219,7 +221,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                     </Stack>
                   ) : null}
                   inputValue={search}
-                  selectedItem={launchDarklyFlags.find(flag => flag.key === formState.key) || null}
+                  selectedItem={launchDarklyFlags.find(flag => flag.key === formState.key) || undefined}
                   placeholder="Search by name or key..."
                 />
               </FormControl>
@@ -403,6 +405,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                       <Text>
                         Your flag is now live in LaunchDarkly but <strong>turned off by default</strong> in all environments. 
                         To use this flag with Contentful, you can now map content to its variations. You can change the flag name and key <strong>in LaunchDarkly</strong> if needed.
+                        {/* FUTURE: Environment-specific content mappings and targeting will be supported */}
                       </Text>
                     </Stack>
                     
@@ -410,7 +413,8 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                       <Button
                         variant="secondary"
                         onClick={() => {
-                          // Use the configured environment, fallback to production if not set
+                          // Use the configured environment for LaunchDarkly URL generation
+                          // FUTURE: This will support multi-environment features like environment-specific targeting
                           const envKey = configuredEnvironment || 'production';
                           const flagUrl = `https://app.launchdarkly.com/projects/${configuredProjectKey}/flags/${formState.key}/targeting?env=${envKey}&selected-env=${envKey}`;
                           window.open(flagUrl, '_blank');

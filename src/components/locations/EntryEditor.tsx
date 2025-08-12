@@ -15,9 +15,7 @@ import { useErrorState, useFlags, useUnsavedChanges, useFlagCreation } from '@/h
 import { extractSimpleContentMapping } from '@/utils/contentMapping';
 import { validateFlagData } from '@/utils/validation';
 import { EnhancedContentfulEntry, FlagFormState } from '../EntryEditor/types';
-import { FlagMode, CreateFlagData, VariationType } from '@/types/launchdarkly';
-
-const FLAG_CONTENT_TYPE_ID = 'launchDarklyFeatureFlag';
+import { FlagMode, CreateFlagData, VariationType, FeatureFlag } from '@/types/launchdarkly';
 
 const EntryEditor = () => {
   const sdk = useSDK<EditorAppSDK>();
@@ -44,6 +42,7 @@ const EntryEditor = () => {
   // Track if initial load is complete
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   // Store configured project key and environment from app parameters
+  // These are app-level settings that will support FUTURE multi-environment features
   const [configuredProjectKey, setConfiguredProjectKey] = useState<string>('');
   const [configuredEnvironment, setConfiguredEnvironment] = useState<string>('');
   // UI state
@@ -71,15 +70,16 @@ const EntryEditor = () => {
         setLoading(prev => ({ ...prev, entry: true }));
         
         // Get configured project key and environment from app parameters (compatible with different SDK types)
+        // These settings will support FUTURE multi-environment features and environment-specific operations
         let projectKey = '';
         let environment = '';
-        if ('app' in sdk && typeof (sdk as any).app?.getParameters === 'function') {
-          const appParameters = await (sdk as any).app.getParameters();
+        if ('app' in sdk && typeof (sdk as { app: { getParameters: () => Promise<{ launchDarklyProjectKey?: string; launchDarklyEnvironment?: string }> } }).app?.getParameters === 'function') {
+          const appParameters = await (sdk as { app: { getParameters: () => Promise<{ launchDarklyProjectKey?: string; launchDarklyEnvironment?: string }> } }).app.getParameters();
           projectKey = appParameters?.launchDarklyProjectKey || '';
           environment = appParameters?.launchDarklyEnvironment || '';
         } else {
-          projectKey = (sdk as any).parameters?.installation?.launchDarklyProjectKey || '';
-          environment = (sdk as any).parameters?.installation?.launchDarklyEnvironment || '';
+          projectKey = (sdk as { parameters?: { installation?: { launchDarklyProjectKey?: string; launchDarklyEnvironment?: string } } }).parameters?.installation?.launchDarklyProjectKey || '';
+          environment = (sdk as { parameters?: { installation?: { launchDarklyProjectKey?: string; launchDarklyEnvironment?: string } } }).parameters?.installation?.launchDarklyEnvironment || '';
         }
         setConfiguredProjectKey(projectKey);
         setConfiguredEnvironment(environment);
@@ -92,7 +92,7 @@ const EntryEditor = () => {
         setHasExistingMappings(hasMappings);
   
         // Helper function to infer variation type from variations data
-        const inferVariationType = (variations: Array<{ value: any; name: string }>): VariationType => {
+        const inferVariationType = (variations: Array<{ value: unknown; name: string }>): VariationType => {
           if (!variations || variations.length === 0) return 'boolean';
           
           // Check if it's a boolean flag (True/False)
@@ -126,6 +126,8 @@ const EntryEditor = () => {
           mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null)
         };
   
+        // Convert simple content mappings to enhanced content with rich metadata
+        // This bridges the gap between Contentful's simple storage and UI's need for metadata
         const contentMappings = savedState.contentMappings || {};
         const enhancedContent: Record<number, EnhancedContentfulEntry> = {};
   
@@ -136,9 +138,9 @@ const EntryEditor = () => {
               typeof entryIdOrObj === 'object' &&
               entryIdOrObj !== null &&
               'sys' in entryIdOrObj &&
-              typeof (entryIdOrObj as any).sys.id === 'string'
+              typeof (entryIdOrObj as { sys: { id: string } }).sys.id === 'string'
             ) {
-              entryId = (entryIdOrObj as any).sys.id;
+              entryId = (entryIdOrObj as { sys: { id: string } }).sys.id;
             }
             if (entryId) {
               const enhanced = await fetchEnhancedEntry(String(entryId), sdk);
@@ -161,6 +163,18 @@ const EntryEditor = () => {
     loadSavedEntryData();
   }, [sdk.entry, handleError, initialLoadComplete]);
 
+  /**
+   * Fetches rich metadata for a Contentful entry to enhance the UI display.
+   * 
+   * This function converts a simple entry ID into an EnhancedContentfulEntry with
+   * metadata like entry title, content type name, etc. This is needed because
+   * Contentful's contentMappings only store simple IDs, but the UI needs rich
+   * information to display meaningful content to users.
+   * 
+   * @param entryId - The Contentful entry ID to fetch metadata for
+   * @param sdk - The Contentful SDK instance
+   * @returns Enhanced entry with metadata, or undefined if fetch fails
+   */
   const fetchEnhancedEntry = async (entryId: string, sdk: EditorAppSDK) => {
     try {
       const entry = await sdk.cma.entry.get({ entryId });
@@ -209,7 +223,7 @@ const EntryEditor = () => {
     };
     setFormState(defaultState);
     setEnhancedVariationContent({});
-    resetLastSavedState(defaultState);
+    resetLastSavedState();
   };
 
   // Load existing flags when switching to 'existing' mode
@@ -220,7 +234,7 @@ const EntryEditor = () => {
   };
 
   // Handle form changes with validation
-  const handleFormChange = (field: keyof FlagFormState, value: any) => {
+  const handleFormChange = (field: keyof FlagFormState, value: unknown) => {
     setFormState(prev => ({
       ...prev,
       [field]: value
@@ -237,7 +251,7 @@ const EntryEditor = () => {
   };
 
   // Handle flag selection
-  const handleFlagSelect = (item: any) => {
+  const handleFlagSelect = (item: FeatureFlag) => {
     if (!item) return;
     
     setFormState(prev => ({
@@ -308,7 +322,8 @@ const EntryEditor = () => {
         return;
       }
 
-      // Now save content mapping to Contentful
+      // Convert enhanced content back to simple IDs for Contentful storage
+      // This extracts just the entry IDs from the rich metadata for storage
       const simpleMapping = extractSimpleContentMapping({
         ...formState,
         enhancedVariationContent,
@@ -422,10 +437,6 @@ const EntryEditor = () => {
               onSearchChange={setSearch}
               onFlagSelect={handleFlagSelect}
               onFormChange={handleFormChange}
-              onVariationsChange={(newVariations) => 
-                setFormState(prev => ({ ...prev, variations: newVariations }))
-              }
-              flagStatus={{ isLive: false, isExperiment: false }}
               enhancedVariationContent={enhancedVariationContent}
               setEnhancedVariationContent={setEnhancedVariationContent}
               validationErrors={validationErrors}
