@@ -64,8 +64,8 @@ export const useContentTypeManagement = (sdk: ConfigAppSDK) => {
               localized: false,
             },
             {
-              id: 'flagDetails',
-              name: 'Flag Details',
+              id: 'contentMappings',
+              name: 'Content Mappings',
               type: 'Object',
               required: false,
               localized: false,

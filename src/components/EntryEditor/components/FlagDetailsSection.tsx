@@ -232,7 +232,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                 <Heading as="h3" marginBottom="spacingM">Map Content to Variations</Heading>
                 <VariationContentSection
                   variations={formState.variations}
-                  flagDetails={formState.flagDetails}
+                  contentMappings={formState.contentMappings}
                   enhancedVariationContent={enhancedVariationContent}
                   onSelectContent={handleSelectVariationContent}
                   onEditEntry={handleEditEntry}

@@ -48,11 +48,11 @@ const Sidebar = () => {
             const flagName = flagEntry.fields.name?.[sdk.locales.default] || 'Unnamed Flag';
             const flagKey = flagEntry.fields.key?.[sdk.locales.default] || 'unknown';
             const variations = flagEntry.fields.variations?.[sdk.locales.default] || [];
-            const flagDetails = flagEntry.fields.flagDetails?.[sdk.locales.default];
+            const contentMappings = flagEntry.fields.contentMappings?.[sdk.locales.default];
 
             // Check which variation(s) this entry is used in
-            if (flagDetails && typeof flagDetails === 'object') {
-              Object.entries(flagDetails).forEach(([variationIndex, entryReference]) => {
+            if (contentMappings && typeof contentMappings === 'object') {
+              Object.entries(contentMappings).forEach(([variationIndex, entryReference]) => {
                 let entryId = entryReference;
                 
                 // Handle both string IDs and object references

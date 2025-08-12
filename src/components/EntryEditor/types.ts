@@ -35,7 +35,7 @@ export interface FlagFormState {
   };
   dependencies?: string[];
   // Keep the existing content mapping field
-  flagDetails: Record<string, any>;
+  contentMappings: Record<string, any>;
 }
 
 // Legacy simple FlagFormState for backward compatibility
@@ -44,7 +44,7 @@ export type SimpleFlagFormState = {
   key: string;
   description: string;
   variations: { name: string; value: any }[];
-  flagDetails: Record<string, any>;
+  contentMappings: Record<string, any>;
 };
 
 export interface EntryEditorProps {

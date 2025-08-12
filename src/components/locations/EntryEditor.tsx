@@ -30,7 +30,7 @@ const EntryEditor = () => {
   // Basic form state with proper defaults for enhanced FlagFormState
   const [formState, setFormState] = useState<FlagFormState>({
     variations: [],
-    flagDetails: {},
+    contentMappings: {},
     name: '',
     key: '',
     description: '',
@@ -106,13 +106,13 @@ const EntryEditor = () => {
         const fields = sdk.entry.fields;
         
         // Check if there are existing content mappings
-        const existingFlagDetails = fields.flagDetails?.getValue() || {};
-        const hasMappings = Object.keys(existingFlagDetails).length > 0;
+        const existingContentMappings = fields.contentMappings?.getValue() || {};
+        const hasMappings = Object.keys(existingContentMappings).length > 0;
         setHasExistingMappings(hasMappings);
   
         const savedState: FlagFormState = {
           variations: fields.variations?.getValue() || [],
-          flagDetails: existingFlagDetails,
+          contentMappings: existingContentMappings,
           name: fields.name?.getValue() || '',
           key: fields.key?.getValue() || '',
           description: fields.description?.getValue() || '',
@@ -143,11 +143,11 @@ const EntryEditor = () => {
           dependencies: fields.dependencies?.getValue() || []
         };
   
-        const flagDetails = savedState.flagDetails || {};
+        const contentMappings = savedState.contentMappings || {};
         const enhancedContent: Record<number, EnhancedContentfulEntry> = {};
   
         await Promise.all(
-          Object.entries(flagDetails).map(async ([index, entryIdOrObj]) => {
+          Object.entries(contentMappings).map(async ([index, entryIdOrObj]) => {
             let entryId = entryIdOrObj;
             if (
               typeof entryIdOrObj === 'object' &&
@@ -215,7 +215,7 @@ const EntryEditor = () => {
     
     const defaultState: FlagFormState = {
       variations: [],
-      flagDetails: {},
+      contentMappings: {},
       name: '',
       key: '',
       description: '',
@@ -354,7 +354,7 @@ const EntryEditor = () => {
 
       console.log('Saving content mapping to Contentful:', {
         variations: formState.variations,
-        flagDetails: simpleMapping,
+        contentMappings: simpleMapping,
         name: formState.name,
         key: formState.key,
         description: formState.description,
@@ -363,7 +363,7 @@ const EntryEditor = () => {
       
       const fields = sdk.entry.fields;
       await fields.variations?.setValue(formState.variations);
-      await fields.flagDetails?.setValue(simpleMapping);
+      await fields.contentMappings?.setValue(simpleMapping);
       await fields.name?.setValue(formState.name);
       await fields.key?.setValue(formState.key);
       await fields.description?.setValue(formState.description);
