@@ -22,13 +22,6 @@ export const VariationContentMapping: React.FC<VariationContentMappingProps> = (
       setShowSelector(true);
     }
   }, [entryLink, variationIndex]);
-  
-  // Force update on refresh trigger
-  useEffect(() => {
-    if (!entryLink) {
-      setShowSelector(true);
-    }
-  }, [entryLink, variationIndex]);
 
   // When removing content, immediately show selector and prevent default
   const handleRemove = (e?: React.MouseEvent) => {
