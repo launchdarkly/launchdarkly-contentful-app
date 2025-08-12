@@ -18,14 +18,7 @@ export interface FlagFormState {
   contentMappings: Record<string, any>;
 }
 
-// Legacy simple FlagFormState for backward compatibility
-export type SimpleFlagFormState = {
-  name: string;
-  key: string;
-  description: string;
-  variations: { name: string; value: any }[];
-  contentMappings: Record<string, any>;
-};
+
 
 export interface EntryEditorProps {
   defaultProject?: string;
@@ -37,11 +30,6 @@ export interface ExtendedEditorAppSDK extends EditorAppSDK {
   entry: EditorAppSDK['entry'] & {
     fields: EditorAppSDK['entry']['fields'] & {
       mode: { getValue: () => FlagMode };
-      rolloutStrategy: { getValue: () => RolloutStrategy };
-      rolloutConfig: { getValue: () => any };
-      scheduledRelease: { getValue: () => any };
-      previewSettings: { getValue: () => any };
-      dependencies: { getValue: () => string[] };
     };
   };
   window: {

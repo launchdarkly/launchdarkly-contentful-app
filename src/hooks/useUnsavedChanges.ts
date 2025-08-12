@@ -78,8 +78,7 @@ export function useUnsavedChanges(formState: FlagFormState) {
 
     // Check if any significant field has changed
     const significantFields: (keyof FlagFormState)[] = [
-      'name', 'key', 'description', 'variations', 'variationType', 
-      'rolloutConfig', 'previewSettings'
+      'name', 'key', 'description', 'variations', 'variationType'
     ];
 
     const hasChanges = significantFields.some(field =>

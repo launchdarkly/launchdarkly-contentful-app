@@ -15,7 +15,7 @@ import { useErrorState, useFlags, useUnsavedChanges, useFlagCreation } from '@/h
 import { extractSimpleContentMapping } from '@/utils/contentMapping';
 import { validateFlagData } from '@/utils/validation';
 import { EnhancedContentfulEntry, FlagFormState } from '../EntryEditor/types';
-import { FlagMode, CreateFlagData } from '@/types/launchdarkly';
+import { FlagMode, CreateFlagData, VariationType } from '@/types/launchdarkly';
 
 const FLAG_CONTENT_TYPE_ID = 'launchDarklyFeatureFlag';
 
@@ -91,15 +91,37 @@ const EntryEditor = () => {
         const hasMappings = Object.keys(existingContentMappings).length > 0;
         setHasExistingMappings(hasMappings);
   
+        // Helper function to infer variation type from variations data
+        const inferVariationType = (variations: Array<{ value: any; name: string }>): VariationType => {
+          if (!variations || variations.length === 0) return 'boolean';
+          
+          // Check if it's a boolean flag (True/False)
+          if (variations.length === 2 && 
+              variations[0]?.name === 'True' && variations[0]?.value === true &&
+              variations[1]?.name === 'False' && variations[1]?.value === false) {
+            return 'boolean';
+          }
+          
+          // Check the first variation's value type
+          const firstValue = variations[0]?.value;
+          if (typeof firstValue === 'number') return 'number';
+          if (typeof firstValue === 'string') return 'string';
+          if (typeof firstValue === 'object') return 'json';
+          
+          return 'string'; // default fallback
+        };
+
+        const variations = fields.variations?.getValue() || [];
+        
         const savedState: FlagFormState = {
-          variations: fields.variations?.getValue() || [],
+          variations: variations,
           contentMappings: existingContentMappings,
           name: fields.name?.getValue() || '',
           key: fields.key?.getValue() || '',
           description: fields.description?.getValue() || '',
           projectKey: projectKey, // Use configured project key
-          variationType: fields.variationType?.getValue() || 'boolean',
-          defaultVariation: fields.defaultVariation?.getValue() || 0,
+          variationType: inferVariationType(variations),
+          defaultVariation: 0, // Always 0, not persisted to Contentful
           // Auto-set mode to 'existing' if there are existing mappings, otherwise use saved mode or null
           mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null)
         };
@@ -307,10 +329,8 @@ const EntryEditor = () => {
       await fields.name?.setValue(formState.name);
       await fields.key?.setValue(formState.key);
       await fields.description?.setValue(formState.description);
-      await fields.mode?.setValue(formState.mode);
-      await fields.projectKey?.setValue(configuredProjectKey);
-      await fields.existingFlagKey?.setValue(formState.existingFlagKey);
-      await fields.variationType?.setValue(formState.variationType);
+      // Note: mode, projectKey, existingFlagKey, and variationType are not saved to Contentful
+      // as they are not part of the content model. They are managed as local state only.
       
       await sdk.entry.save();
       
