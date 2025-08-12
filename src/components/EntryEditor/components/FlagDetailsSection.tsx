@@ -150,8 +150,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
       description: formState.description,
       kind: formState.variationType,
       variations: formState.variations,
-      tags: formState.tags || [],
-      temporary: formState.temporary || false
+
     };
 
     try {

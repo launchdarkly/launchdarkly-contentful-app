@@ -11,29 +11,9 @@ export interface FlagFormState {
   projectKey: string;
   variationType: VariationType;
   variations: Array<{ value: any; name: string }>;
-  defaultVariation: number;
-  tags: string[];
-  temporary: boolean;
+  defaultVariation: number; // at the moment, this will always be 0
   existingFlagKey?: string;
   mode: FlagMode;
-  rolloutStrategy?: RolloutStrategy;
-  rolloutConfig?: {
-    percentage?: number;
-    userSegments?: string[];
-    startDate?: string;
-    endDate?: string;
-  };
-  scheduledRelease?: {
-    enabled: boolean;
-    releaseDate: string;
-    environments: string[];
-  };
-  previewSettings?: {
-    enablePreviewFlags: boolean;
-    previewEnvironment: string;
-    autoCreatePreviewFlags: boolean;
-  };
-  dependencies?: string[];
   // Keep the existing content mapping field
   contentMappings: Record<string, any>;
 }

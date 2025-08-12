@@ -46,12 +46,7 @@ export function validateFlagData(data: CreateFlagData): ValidationResult {
     errors.description = 'Description must be less than 1000 characters';
   }
 
-  // Validate tags
-  if (data.tags && !Array.isArray(data.tags)) {
-    errors.tags = 'Tags must be an array';
-  } else if (data.tags && data.tags.some(tag => typeof tag !== 'string')) {
-    errors.tags = 'All tags must be strings';
-  }
+
 
   return {
     isValid: Object.keys(errors).length === 0,

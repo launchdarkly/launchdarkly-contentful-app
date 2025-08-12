@@ -37,26 +37,7 @@ const EntryEditor = () => {
     projectKey: '',
     variationType: 'boolean',
     defaultVariation: 0,
-    tags: [],
-    temporary: false,
     mode: null,
-    rolloutConfig: {
-      percentage: 0,
-      userSegments: [],
-      startDate: '',
-      endDate: ''
-    },
-    scheduledRelease: {
-      enabled: false,
-      releaseDate: '',
-      environments: []
-    },
-    previewSettings: {
-      enablePreviewFlags: false,
-      previewEnvironment: 'production',
-      autoCreatePreviewFlags: false
-    },
-    dependencies: []
   });
   // Loading state
   const [loading, setLoading] = useState({ entry: true, saving: false });
@@ -119,28 +100,8 @@ const EntryEditor = () => {
           projectKey: projectKey, // Use configured project key
           variationType: fields.variationType?.getValue() || 'boolean',
           defaultVariation: fields.defaultVariation?.getValue() || 0,
-          tags: fields.tags?.getValue() || [],
-          temporary: fields.temporary?.getValue() || false,
           // Auto-set mode to 'existing' if there are existing mappings, otherwise use saved mode or null
-          mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null),
-          rolloutStrategy: fields.rolloutStrategy?.getValue(),
-          rolloutConfig: fields.rolloutConfig?.getValue() || {
-            percentage: 0,
-            userSegments: [],
-            startDate: '',
-            endDate: ''
-          },
-          scheduledRelease: fields.scheduledRelease?.getValue() || {
-            enabled: false,
-            releaseDate: '',
-            environments: []
-          },
-          previewSettings: fields.previewSettings?.getValue() || {
-            enablePreviewFlags: false,
-            previewEnvironment: 'production',
-            autoCreatePreviewFlags: false
-          },
-          dependencies: fields.dependencies?.getValue() || []
+          mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null)
         };
   
         const contentMappings = savedState.contentMappings || {};
@@ -222,26 +183,7 @@ const EntryEditor = () => {
       projectKey: formState.projectKey, // Keep project key
       variationType: 'boolean',
       defaultVariation: 0,
-      tags: [],
-      temporary: false,
       mode: modeToUse, // Use the correct mode
-      rolloutConfig: {
-        percentage: 0,
-        userSegments: [],
-        startDate: '',
-        endDate: ''
-      },
-      scheduledRelease: {
-        enabled: false,
-        releaseDate: '',
-        environments: []
-      },
-      previewSettings: {
-        enablePreviewFlags: false,
-        previewEnvironment: 'production',
-        autoCreatePreviewFlags: false
-      },
-      dependencies: []
     };
     setFormState(defaultState);
     setEnhancedVariationContent({});
@@ -303,9 +245,7 @@ const EntryEditor = () => {
         key: formState.key,
         description: formState.description,
         kind: formState.variationType,
-        variations: formState.variations,
-        tags: formState.tags,
-        temporary: formState.temporary
+        variations: formState.variations
       };
       
       const validation = validateFlagData(flagData);
@@ -371,8 +311,6 @@ const EntryEditor = () => {
       await fields.projectKey?.setValue(configuredProjectKey);
       await fields.existingFlagKey?.setValue(formState.existingFlagKey);
       await fields.variationType?.setValue(formState.variationType);
-      await fields.tags?.setValue(formState.tags);
-      await fields.temporary?.setValue(formState.temporary);
       
       await sdk.entry.save();
       
