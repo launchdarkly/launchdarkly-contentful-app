@@ -1,7 +1,7 @@
 // src/components/EntryEditor/types.ts
 
 import { EditorAppSDK } from '@contentful/app-sdk';
-import { FlagMode, RolloutStrategy, VariationType } from '../../types/launchdarkly';
+import { FlagMode, RolloutStrategy, VariationType, VariationValue } from '../../types/launchdarkly';
 
 // Enhanced FlagFormState with all the flag management capabilities
 export interface FlagFormState {
@@ -10,46 +10,12 @@ export interface FlagFormState {
   description: string;
   projectKey: string;
   variationType: VariationType;
-  variations: Array<{ value: any; name: string }>;
-  defaultVariation: number;
-  tags: string[];
-  temporary: boolean;
+  variations: Array<{ value: VariationValue; name: string }>;
+  defaultVariation: number; // at the moment, this will always be 0
   existingFlagKey?: string;
   mode: FlagMode;
-  rolloutStrategy?: RolloutStrategy;
-  rolloutConfig?: {
-    percentage?: number;
-    userSegments?: string[];
-    startDate?: string;
-    endDate?: string;
-  };
-  scheduledRelease?: {
-    enabled: boolean;
-    releaseDate: string;
-    environments: string[];
-  };
-  previewSettings?: {
-    enablePreviewFlags: boolean;
-    previewEnvironment: string;
-    autoCreatePreviewFlags: boolean;
-  };
-  dependencies?: string[];
   // Keep the existing content mapping field
-  flagDetails: Record<string, any>;
-}
-
-// Legacy simple FlagFormState for backward compatibility
-export type SimpleFlagFormState = {
-  name: string;
-  key: string;
-  description: string;
-  variations: { name: string; value: any }[];
-  flagDetails: Record<string, any>;
-};
-
-export interface EntryEditorProps {
-  defaultProject?: string;
-  defaultEnvironment?: string;
+  contentMappings: Record<string, string>;
 }
 
 // Extended SDK for flag management capabilities
@@ -57,11 +23,6 @@ export interface ExtendedEditorAppSDK extends EditorAppSDK {
   entry: EditorAppSDK['entry'] & {
     fields: EditorAppSDK['entry']['fields'] & {
       mode: { getValue: () => FlagMode };
-      rolloutStrategy: { getValue: () => RolloutStrategy };
-      rolloutConfig: { getValue: () => any };
-      scheduledRelease: { getValue: () => any };
-      previewSettings: { getValue: () => any };
-      dependencies: { getValue: () => string[] };
     };
   };
   window: {
@@ -121,7 +82,7 @@ export interface EntryPreviewData {
   status: 'draft' | 'published' | 'changed' | 'archived';
   contentType: string;
   contentTypeId: string;
-  fields?: Record<string, any>;
+  fields?: Record<string, unknown>;
   media?: {
     url?: string;
     width?: number;
@@ -130,9 +91,26 @@ export interface EntryPreviewData {
   };
 }
 
-// Enhance FlagFormState with structured variation content
+/**
+ * Enhanced FlagFormState that bridges the gap between Contentful's simple storage format
+ * and the UI's need for rich metadata.
+ * 
+ * Problem: Contentful contentMappings only store simple entry IDs (e.g., "entry-id-123"),
+ * but the UI needs rich metadata (entry titles, content type names, etc.) for display.
+ * 
+ * Solution: This interface extends FlagFormState with enhancedVariationContent that contains
+ * the full metadata for each referenced entry, while keeping the original contentMappings
+ * for simple storage/retrieval from Contentful.
+ */
 export interface EnhancedFlagFormState extends FlagFormState {
-  // This extends the existing type without replacing it
+  /**
+   * Rich metadata for each variation's content mapping.
+   * Key: variation index (number)
+   * Value: Enhanced entry with metadata (title, content type, etc.)
+   * 
+   * This is populated by fetching full entry data for each ID in contentMappings,
+   * allowing the UI to display meaningful information instead of just entry IDs.
+   */
   enhancedVariationContent?: Record<number, EnhancedContentfulEntry>;
 }
 
@@ -145,7 +123,7 @@ export interface ContentTypeFilter {
 }
 
 export interface VariationContentMappingProps {
-  variation: { name: string; value: any };
+  variation: { name: string; value: VariationValue };
   variationIndex: number;
   entryLink?: EnhancedContentfulEntry;
   onSelectContent: (index: number, entry: EnhancedContentfulEntry) => void;

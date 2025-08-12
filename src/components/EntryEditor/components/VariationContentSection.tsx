@@ -5,7 +5,7 @@ import { EnhancedContentfulEntry } from '../types';
 
 interface VariationContentSectionProps {
   variations: Array<{ name: string; value: any }>;
-  flagDetails: Record<string, any>;
+  contentMappings: Record<string, any>;
   enhancedVariationContent: Record<number, EnhancedContentfulEntry>;
   onSelectContent: (index: number, entry: EnhancedContentfulEntry) => void;
   onEditEntry: (entryId: string) => void;
@@ -14,6 +14,7 @@ interface VariationContentSectionProps {
 
 export const VariationContentSection: React.FC<VariationContentSectionProps> = ({
   variations,
+  contentMappings,
   enhancedVariationContent,
   onSelectContent,
   onEditEntry,

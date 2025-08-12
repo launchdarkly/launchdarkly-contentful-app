@@ -3,7 +3,7 @@ import { KnownSDK } from '@contentful/app-sdk';
 interface AppActionParams {
   apiKey: string;
   action: string;
-  params: any;
+  params: Record<string, unknown>;
 }
 
 interface AppActionResponse<T> {
@@ -11,10 +11,10 @@ interface AppActionResponse<T> {
   error?: string;
 }
 
-export const callAppAction = async <T = any>(
+export const callAppAction = async <T = unknown>(
   sdk: KnownSDK,
   action: string,
-  params: any
+  params: Record<string, unknown>
 ): Promise<T> => {
   
   // Get API key using compatible method based on SDK type

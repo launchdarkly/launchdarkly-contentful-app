@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useSDK } from '@contentful/react-apps-toolkit';
 import { callAppAction } from '../utils/appAction';
 import { useErrorState } from './useErrorState';
+import { FeatureFlag } from '../types/launchdarkly';
 
 export const useFlags = (search: string = '') => {
   const sdk = useSDK();
   const { error, handleError, clearError } = useErrorState('useFlags');
-  const [flags, setFlags] = useState<any[]>([]);
+  const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export const useFlags = (search: string = '') => {
           return;
         }
 
-        const result = await callAppAction<any>(sdk, 'getFlags', {
+        const result = await callAppAction<{ items: FeatureFlag[] }>(sdk, 'getFlags', {
           projectKey,
           search
         });

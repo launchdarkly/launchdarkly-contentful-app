@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { SidebarAppSDK } from '@contentful/app-sdk';
-import { Note, Spinner, Card, Heading, Text, Button, Stack, Badge, Box, Flex } from '@contentful/f36-components';
+import { Note, Spinner, Text, Stack, Box, Flex } from '@contentful/f36-components';
 import { useSDK, useCMA } from '@contentful/react-apps-toolkit';
 import { LAUNCHDARKLY_FEATURE_FLAG_CONTENT_TYPE } from '../../utils/constants';
 
@@ -48,11 +48,11 @@ const Sidebar = () => {
             const flagName = flagEntry.fields.name?.[sdk.locales.default] || 'Unnamed Flag';
             const flagKey = flagEntry.fields.key?.[sdk.locales.default] || 'unknown';
             const variations = flagEntry.fields.variations?.[sdk.locales.default] || [];
-            const flagDetails = flagEntry.fields.flagDetails?.[sdk.locales.default];
+            const contentMappings = flagEntry.fields.contentMappings?.[sdk.locales.default];
 
             // Check which variation(s) this entry is used in
-            if (flagDetails && typeof flagDetails === 'object') {
-              Object.entries(flagDetails).forEach(([variationIndex, entryReference]) => {
+            if (contentMappings && typeof contentMappings === 'object') {
+              Object.entries(contentMappings).forEach(([variationIndex, entryReference]) => {
                 let entryId = entryReference;
                 
                 // Handle both string IDs and object references

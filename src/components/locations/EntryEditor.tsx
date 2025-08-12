@@ -15,9 +15,7 @@ import { useErrorState, useFlags, useUnsavedChanges, useFlagCreation } from '@/h
 import { extractSimpleContentMapping } from '@/utils/contentMapping';
 import { validateFlagData } from '@/utils/validation';
 import { EnhancedContentfulEntry, FlagFormState } from '../EntryEditor/types';
-import { FlagMode, CreateFlagData } from '@/types/launchdarkly';
-
-const FLAG_CONTENT_TYPE_ID = 'launchDarklyFeatureFlag';
+import { FlagMode, CreateFlagData, VariationType, FeatureFlag } from '@/types/launchdarkly';
 
 const EntryEditor = () => {
   const sdk = useSDK<EditorAppSDK>();
@@ -30,39 +28,21 @@ const EntryEditor = () => {
   // Basic form state with proper defaults for enhanced FlagFormState
   const [formState, setFormState] = useState<FlagFormState>({
     variations: [],
-    flagDetails: {},
+    contentMappings: {},
     name: '',
     key: '',
     description: '',
     projectKey: '',
     variationType: 'boolean',
     defaultVariation: 0,
-    tags: [],
-    temporary: false,
     mode: null,
-    rolloutConfig: {
-      percentage: 0,
-      userSegments: [],
-      startDate: '',
-      endDate: ''
-    },
-    scheduledRelease: {
-      enabled: false,
-      releaseDate: '',
-      environments: []
-    },
-    previewSettings: {
-      enablePreviewFlags: false,
-      previewEnvironment: 'production',
-      autoCreatePreviewFlags: false
-    },
-    dependencies: []
   });
   // Loading state
   const [loading, setLoading] = useState({ entry: true, saving: false });
   // Track if initial load is complete
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   // Store configured project key and environment from app parameters
+  // These are app-level settings that will support FUTURE multi-environment features
   const [configuredProjectKey, setConfiguredProjectKey] = useState<string>('');
   const [configuredEnvironment, setConfiguredEnvironment] = useState<string>('');
   // UI state
@@ -90,15 +70,16 @@ const EntryEditor = () => {
         setLoading(prev => ({ ...prev, entry: true }));
         
         // Get configured project key and environment from app parameters (compatible with different SDK types)
+        // These settings will support FUTURE multi-environment features and environment-specific operations
         let projectKey = '';
         let environment = '';
-        if ('app' in sdk && typeof (sdk as any).app?.getParameters === 'function') {
-          const appParameters = await (sdk as any).app.getParameters();
+        if ('app' in sdk && typeof (sdk as { app: { getParameters: () => Promise<{ launchDarklyProjectKey?: string; launchDarklyEnvironment?: string }> } }).app?.getParameters === 'function') {
+          const appParameters = await (sdk as { app: { getParameters: () => Promise<{ launchDarklyProjectKey?: string; launchDarklyEnvironment?: string }> } }).app.getParameters();
           projectKey = appParameters?.launchDarklyProjectKey || '';
           environment = appParameters?.launchDarklyEnvironment || '';
         } else {
-          projectKey = (sdk as any).parameters?.installation?.launchDarklyProjectKey || '';
-          environment = (sdk as any).parameters?.installation?.launchDarklyEnvironment || '';
+          projectKey = (sdk as { parameters?: { installation?: { launchDarklyProjectKey?: string; launchDarklyEnvironment?: string } } }).parameters?.installation?.launchDarklyProjectKey || '';
+          environment = (sdk as { parameters?: { installation?: { launchDarklyProjectKey?: string; launchDarklyEnvironment?: string } } }).parameters?.installation?.launchDarklyEnvironment || '';
         }
         setConfiguredProjectKey(projectKey);
         setConfiguredEnvironment(environment);
@@ -106,56 +87,60 @@ const EntryEditor = () => {
         const fields = sdk.entry.fields;
         
         // Check if there are existing content mappings
-        const existingFlagDetails = fields.flagDetails?.getValue() || {};
-        const hasMappings = Object.keys(existingFlagDetails).length > 0;
+        const existingContentMappings = fields.contentMappings?.getValue() || {};
+        const hasMappings = Object.keys(existingContentMappings).length > 0;
         setHasExistingMappings(hasMappings);
   
+        // Helper function to infer variation type from variations data
+        const inferVariationType = (variations: Array<{ value: unknown; name: string }>): VariationType => {
+          if (!variations || variations.length === 0) return 'boolean';
+          
+          // Check if it's a boolean flag (True/False)
+          if (variations.length === 2 && 
+              variations[0]?.name === 'True' && variations[0]?.value === true &&
+              variations[1]?.name === 'False' && variations[1]?.value === false) {
+            return 'boolean';
+          }
+          
+          // Check the first variation's value type
+          const firstValue = variations[0]?.value;
+          if (typeof firstValue === 'number') return 'number';
+          if (typeof firstValue === 'string') return 'string';
+          if (typeof firstValue === 'object') return 'json';
+          
+          return 'string'; // default fallback
+        };
+
+        const variations = fields.variations?.getValue() || [];
+        
         const savedState: FlagFormState = {
-          variations: fields.variations?.getValue() || [],
-          flagDetails: existingFlagDetails,
+          variations: variations,
+          contentMappings: existingContentMappings,
           name: fields.name?.getValue() || '',
           key: fields.key?.getValue() || '',
           description: fields.description?.getValue() || '',
           projectKey: projectKey, // Use configured project key
-          variationType: fields.variationType?.getValue() || 'boolean',
-          defaultVariation: fields.defaultVariation?.getValue() || 0,
-          tags: fields.tags?.getValue() || [],
-          temporary: fields.temporary?.getValue() || false,
+          variationType: inferVariationType(variations),
+          defaultVariation: 0, // Always 0, not persisted to Contentful
           // Auto-set mode to 'existing' if there are existing mappings, otherwise use saved mode or null
-          mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null),
-          rolloutStrategy: fields.rolloutStrategy?.getValue(),
-          rolloutConfig: fields.rolloutConfig?.getValue() || {
-            percentage: 0,
-            userSegments: [],
-            startDate: '',
-            endDate: ''
-          },
-          scheduledRelease: fields.scheduledRelease?.getValue() || {
-            enabled: false,
-            releaseDate: '',
-            environments: []
-          },
-          previewSettings: fields.previewSettings?.getValue() || {
-            enablePreviewFlags: false,
-            previewEnvironment: 'production',
-            autoCreatePreviewFlags: false
-          },
-          dependencies: fields.dependencies?.getValue() || []
+          mode: hasMappings ? 'existing' : (fields.mode?.getValue() || null)
         };
   
-        const flagDetails = savedState.flagDetails || {};
+        // Convert simple content mappings to enhanced content with rich metadata
+        // This bridges the gap between Contentful's simple storage and UI's need for metadata
+        const contentMappings = savedState.contentMappings || {};
         const enhancedContent: Record<number, EnhancedContentfulEntry> = {};
   
         await Promise.all(
-          Object.entries(flagDetails).map(async ([index, entryIdOrObj]) => {
+          Object.entries(contentMappings).map(async ([index, entryIdOrObj]) => {
             let entryId = entryIdOrObj;
             if (
               typeof entryIdOrObj === 'object' &&
               entryIdOrObj !== null &&
               'sys' in entryIdOrObj &&
-              typeof (entryIdOrObj as any).sys.id === 'string'
+              typeof (entryIdOrObj as { sys: { id: string } }).sys.id === 'string'
             ) {
-              entryId = (entryIdOrObj as any).sys.id;
+              entryId = (entryIdOrObj as { sys: { id: string } }).sys.id;
             }
             if (entryId) {
               const enhanced = await fetchEnhancedEntry(String(entryId), sdk);
@@ -178,6 +163,18 @@ const EntryEditor = () => {
     loadSavedEntryData();
   }, [sdk.entry, handleError, initialLoadComplete]);
 
+  /**
+   * Fetches rich metadata for a Contentful entry to enhance the UI display.
+   * 
+   * This function converts a simple entry ID into an EnhancedContentfulEntry with
+   * metadata like entry title, content type name, etc. This is needed because
+   * Contentful's contentMappings only store simple IDs, but the UI needs rich
+   * information to display meaningful content to users.
+   * 
+   * @param entryId - The Contentful entry ID to fetch metadata for
+   * @param sdk - The Contentful SDK instance
+   * @returns Enhanced entry with metadata, or undefined if fetch fails
+   */
   const fetchEnhancedEntry = async (entryId: string, sdk: EditorAppSDK) => {
     try {
       const entry = await sdk.cma.entry.get({ entryId });
@@ -215,37 +212,18 @@ const EntryEditor = () => {
     
     const defaultState: FlagFormState = {
       variations: [],
-      flagDetails: {},
+      contentMappings: {},
       name: '',
       key: '',
       description: '',
       projectKey: formState.projectKey, // Keep project key
       variationType: 'boolean',
       defaultVariation: 0,
-      tags: [],
-      temporary: false,
       mode: modeToUse, // Use the correct mode
-      rolloutConfig: {
-        percentage: 0,
-        userSegments: [],
-        startDate: '',
-        endDate: ''
-      },
-      scheduledRelease: {
-        enabled: false,
-        releaseDate: '',
-        environments: []
-      },
-      previewSettings: {
-        enablePreviewFlags: false,
-        previewEnvironment: 'production',
-        autoCreatePreviewFlags: false
-      },
-      dependencies: []
     };
     setFormState(defaultState);
     setEnhancedVariationContent({});
-    resetLastSavedState(defaultState);
+    resetLastSavedState();
   };
 
   // Load existing flags when switching to 'existing' mode
@@ -256,7 +234,7 @@ const EntryEditor = () => {
   };
 
   // Handle form changes with validation
-  const handleFormChange = (field: keyof FlagFormState, value: any) => {
+  const handleFormChange = (field: keyof FlagFormState, value: unknown) => {
     setFormState(prev => ({
       ...prev,
       [field]: value
@@ -273,7 +251,7 @@ const EntryEditor = () => {
   };
 
   // Handle flag selection
-  const handleFlagSelect = (item: any) => {
+  const handleFlagSelect = (item: FeatureFlag) => {
     if (!item) return;
     
     setFormState(prev => ({
@@ -303,9 +281,7 @@ const EntryEditor = () => {
         key: formState.key,
         description: formState.description,
         kind: formState.variationType,
-        variations: formState.variations,
-        tags: formState.tags,
-        temporary: formState.temporary
+        variations: formState.variations
       };
       
       const validation = validateFlagData(flagData);
@@ -346,7 +322,8 @@ const EntryEditor = () => {
         return;
       }
 
-      // Now save content mapping to Contentful
+      // Convert enhanced content back to simple IDs for Contentful storage
+      // This extracts just the entry IDs from the rich metadata for storage
       const simpleMapping = extractSimpleContentMapping({
         ...formState,
         enhancedVariationContent,
@@ -354,7 +331,7 @@ const EntryEditor = () => {
 
       console.log('Saving content mapping to Contentful:', {
         variations: formState.variations,
-        flagDetails: simpleMapping,
+        contentMappings: simpleMapping,
         name: formState.name,
         key: formState.key,
         description: formState.description,
@@ -363,16 +340,12 @@ const EntryEditor = () => {
       
       const fields = sdk.entry.fields;
       await fields.variations?.setValue(formState.variations);
-      await fields.flagDetails?.setValue(simpleMapping);
+      await fields.contentMappings?.setValue(simpleMapping);
       await fields.name?.setValue(formState.name);
       await fields.key?.setValue(formState.key);
       await fields.description?.setValue(formState.description);
-      await fields.mode?.setValue(formState.mode);
-      await fields.projectKey?.setValue(configuredProjectKey);
-      await fields.existingFlagKey?.setValue(formState.existingFlagKey);
-      await fields.variationType?.setValue(formState.variationType);
-      await fields.tags?.setValue(formState.tags);
-      await fields.temporary?.setValue(formState.temporary);
+      // Note: mode, projectKey, existingFlagKey, and variationType are not saved to Contentful
+      // as they are not part of the content model. They are managed as local state only.
       
       await sdk.entry.save();
       
@@ -464,10 +437,6 @@ const EntryEditor = () => {
               onSearchChange={setSearch}
               onFlagSelect={handleFlagSelect}
               onFormChange={handleFormChange}
-              onVariationsChange={(newVariations) => 
-                setFormState(prev => ({ ...prev, variations: newVariations }))
-              }
-              flagStatus={{ isLive: false, isExperiment: false }}
               enhancedVariationContent={enhancedVariationContent}
               setEnhancedVariationContent={setEnhancedVariationContent}
               validationErrors={validationErrors}

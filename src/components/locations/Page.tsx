@@ -187,7 +187,7 @@ const PageComponent = () => {
                         &nbsp;&nbsp;<span style="color: #ce9178;">&#39;key&#39;</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Symbol - Flag key</span>
                         &nbsp;&nbsp;<span style="color: #ce9178;">&#39;description&#39;</span><span style="color: #d4d4d4;">,</span>      <span style="color: #6a9955;">// Text - Flag description</span>
                         &nbsp;&nbsp;<span style="color: #ce9178;">&#39;variations&#39;</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Object - Flag variations</span>
-                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;flagDetails&#39;</span><span style="color: #d4d4d4;">,</span>       <span style="color: #6a9955;">// Object - Content mapping</span>
+                        &nbsp;&nbsp;<span style="color: #ce9178;">&#39;contentMappings&#39;</span><span style="color: #d4d4d4;">,</span>       <span style="color: #6a9955;">// Object - Content mapping</span>
                         &nbsp;&nbsp;<span style="color: #ce9178;">&#39;mode&#39;</span><span style="color: #d4d4d4;">,</span>            <span style="color: #6a9955;">// Symbol - Current mode</span>
                         &nbsp;&nbsp;<span style="color: #ce9178;">&#39;projectKey&#39;</span><span style="color: #d4d4d4;">,</span>        <span style="color: #6a9955;">// Symbol - LaunchDarkly project</span>
                         &nbsp;&nbsp;<span style="color: #ce9178;">&#39;variationType&#39;</span><span style="color: #d4d4d4;">,</span>     <span style="color: #6a9955;">// Symbol - Variation type</span>
@@ -211,7 +211,7 @@ const requiredFields = [
   'key',            // Symbol - Flag key
   'description',    // Text - Flag description
   'variations',     // Object - Flag variations
-  'flagDetails',    // Object - Content mapping
+  'contentMappings',    // Object - Content mapping
   'mode',           // Symbol - Current mode
   'projectKey',     // Symbol - LaunchDarkly project
   'variationType',  // Symbol - Variation type
