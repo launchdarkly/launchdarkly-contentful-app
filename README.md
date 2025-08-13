@@ -61,7 +61,7 @@ This project integrates [LaunchDarkly](https://launchdarkly.com/) feature flags 
 
 2. **For local testing:**
    - Use your local dev URL (e.g., `http://localhost:3000` or your ngrok URL) as the app's location.
-   - You can also use the [Contentful CLI](https://www.contentful.com/developers/docs/cli/) to install the app for local development, however for this project it's suggested to do this step within the Contentful UI itself.
+   - You can also use the [Contentful CLI](https://www.contentful.com/developers/docs/cli/) to install the app for local development, however for this project it's suggested to do this step within the Contentful UI itself..
    
    ![App installation dialog in Contentful UI with local URL entered]()
 
