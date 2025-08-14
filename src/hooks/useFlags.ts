@@ -49,10 +49,8 @@ export const useFlags = (search: string = '') => {
         console.log('[useFlags] Received flags count:', result?.items?.length || 0);
 
         if (result?.items) {
-          setFlags(result?.items);
+          setFlags(result.items);
           clearError();
-        } else if (result?.error) {
-          handleError(result?.error);
         } else {
           handleError('No flags found');
         }
