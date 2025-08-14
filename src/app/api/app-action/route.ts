@@ -19,15 +19,10 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'getFlags': {
-        const { projectKey, search } = params;
-        let url = `${apiUrl}/flags/${projectKey}?limit=100`;
+        const { projectKey } = params;
+        const url = `${apiUrl}/flags/${projectKey}?limit=100`;
         
-        // Add search parameter if provided
-        if (search && search.trim()) {
-          url += `&search=${encodeURIComponent(search.trim())}`;
-        }
-        
-        console.log('[API] getFlags called with search:', search);
+        console.log('[API] getFlags called for project:', projectKey);
         console.log('[API] Final URL:', url);
         
         res = await fetch(url, {

@@ -54,6 +54,25 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
   const [flagCreated, setFlagCreated] = useState(false);
   const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
 
+  // Client-side filtering for better autocomplete experience
+  const filteredFlags = React.useMemo(() => {
+    if (!search || !search.trim()) {
+      return launchDarklyFlags;
+    }
+    
+    const searchLower = search.toLowerCase();
+    const filtered = launchDarklyFlags.filter(flag => 
+      flag.name.toLowerCase().includes(searchLower) ||
+      flag.key.toLowerCase().includes(searchLower)
+    );
+    
+    console.log('[FlagDetailsSection] Search:', search);
+    console.log('[FlagDetailsSection] Total flags:', launchDarklyFlags.length);
+    console.log('[FlagDetailsSection] Filtered flags:', filtered.length);
+    
+    return filtered;
+  }, [launchDarklyFlags, search]);
+
   useEffect(() => {
     if (launchDarklyFlags.length && formState.key) {
       const selectedFlag = launchDarklyFlags.find(flag => flag.key === formState.key);
@@ -209,7 +228,7 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                 </Flex>
                 <Autocomplete
                   id="flag-autocomplete"
-                  items={launchDarklyFlags}
+                  items={filteredFlags}
                   onInputValueChange={onSearchChange}
                   onSelectItem={handleExistingFlagSelect}
                   itemToString={(item) => (item ? `${item.name} (${item.key})` : '')}

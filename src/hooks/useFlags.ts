@@ -9,16 +9,9 @@ export const useFlags = (search: string = '') => {
   const { error, handleError, clearError } = useErrorState('useFlags');
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    // Clear any existing timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // Set a new timeout to debounce the search
-    debounceTimeoutRef.current = setTimeout(async () => {
+    const fetchFlags = async () => {
       try {
         setLoading(true);
         clearError();
@@ -41,10 +34,9 @@ export const useFlags = (search: string = '') => {
           return;
         }
 
-        console.log('[useFlags] Calling getFlags with search:', search);
+        console.log('[useFlags] Fetching all flags...');
         const result = await callAppAction<{ items: FeatureFlag[] }>(sdk, 'getFlags', {
-          projectKey,
-          search
+          projectKey
         });
         console.log('[useFlags] Received flags count:', result?.items?.length || 0);
 
@@ -59,15 +51,10 @@ export const useFlags = (search: string = '') => {
       } finally {
         setLoading(false);
       }
-    }, 300); // 300ms debounce delay
-
-    // Cleanup function to clear timeout on unmount
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
     };
-  }, [sdk, search, handleError, clearError]);
+
+    fetchFlags();
+  }, [sdk, handleError, clearError]);
 
   return { flags, loading, error };
 }; 

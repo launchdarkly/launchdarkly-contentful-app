@@ -47,7 +47,7 @@ const EntryEditor = () => {
   const [configuredEnvironment, setConfiguredEnvironment] = useState<string>('');
   // UI state
   const [search, setSearch] = useState('');
-  const { flags: launchDarklyFlags, loading: flagsLoading } = useFlags(search);
+  const { flags: launchDarklyFlags, loading: flagsLoading } = useFlags();
   
   // Track unsaved changes
   const { hasUnsavedChanges, markAsSaved, resetLastSavedState } = useUnsavedChanges(formState);
