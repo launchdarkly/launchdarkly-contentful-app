@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSDK } from '@contentful/react-apps-toolkit';
 import { callAppAction } from '../utils/appAction';
 import { useErrorState } from './useErrorState';
@@ -9,9 +9,16 @@ export const useFlags = (search: string = '') => {
   const { error, handleError, clearError } = useErrorState('useFlags');
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    const fetchFlags = async () => {
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set a new timeout to debounce the search
+    debounceTimeoutRef.current = setTimeout(async () => {
       try {
         setLoading(true);
         clearError();
@@ -29,17 +36,17 @@ export const useFlags = (search: string = '') => {
           parameters = sdk.parameters?.installation;
         }
 
-
-
         if (!apiKey || !projectKey) {
           handleError('Missing API key or project key');
           return;
         }
 
+        console.log('[useFlags] Calling getFlags with search:', search);
         const result = await callAppAction<{ items: FeatureFlag[] }>(sdk, 'getFlags', {
           projectKey,
           search
         });
+        console.log('[useFlags] Received flags count:', result?.items?.length || 0);
 
         if (result?.items) {
           setFlags(result?.items);
@@ -54,9 +61,14 @@ export const useFlags = (search: string = '') => {
       } finally {
         setLoading(false);
       }
-    };
+    }, 300); // 300ms debounce delay
 
-    fetchFlags();
+    // Cleanup function to clear timeout on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
   }, [sdk, search, handleError, clearError]);
 
   return { flags, loading, error };

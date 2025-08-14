@@ -1,11 +1,10 @@
 import React from 'react';
-import { Card, Box, Heading, Stack } from '@contentful/f36-components';
+import { Box, Heading, Stack } from '@contentful/f36-components';
 import { VariationContentMapping } from './VariationContentMapping';
 import { EnhancedContentfulEntry } from '../types';
 
 interface VariationContentSectionProps {
   variations: Array<{ name: string; value: any }>;
-  contentMappings: Record<string, any>;
   enhancedVariationContent: Record<number, EnhancedContentfulEntry>;
   onSelectContent: (index: number, entry: EnhancedContentfulEntry) => void;
   onEditEntry: (entryId: string) => void;
@@ -14,7 +13,6 @@ interface VariationContentSectionProps {
 
 export const VariationContentSection: React.FC<VariationContentSectionProps> = ({
   variations,
-  contentMappings,
   enhancedVariationContent,
   onSelectContent,
   onEditEntry,

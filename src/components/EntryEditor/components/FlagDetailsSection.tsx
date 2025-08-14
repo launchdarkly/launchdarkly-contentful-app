@@ -233,7 +233,6 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                 <Heading as="h3" marginBottom="spacingM">Map Content to Variations</Heading>
                 <VariationContentSection
                   variations={formState.variations}
-                  contentMappings={formState.contentMappings}
                   enhancedVariationContent={enhancedVariationContent}
                   onSelectContent={handleSelectVariationContent}
                   onEditEntry={handleEditEntry}
@@ -416,8 +415,9 @@ export const FlagDetailsSection: React.FC<FlagDetailsSectionProps> = ({
                           // Use the configured environment for LaunchDarkly URL generation
                           // FUTURE: This will support multi-environment features like environment-specific targeting
                           const envKey = configuredEnvironment || 'production';
-                          const flagUrl = `https://app.launchdarkly.com/projects/${configuredProjectKey}/flags/${formState.key}/targeting?env=${envKey}&selected-env=${envKey}`;
-                          window.open(flagUrl, '_blank');
+                          const targetUrl = `https://app.launchdarkly.com/projects/${configuredProjectKey}/flags/${formState.key}/targeting?env=${envKey}&selected-env=${envKey}`;
+                          const loginUrl = `https://app.launchdarkly.com/login?redirect=${encodeURIComponent(targetUrl)}`;
+                          window.open(loginUrl, '_blank');
                         }}
                       >
                         View in LaunchDarkly
